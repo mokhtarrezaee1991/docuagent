@@ -11,8 +11,8 @@ class DocumentRetrievalPipeline:
     def __init__(self):
         self._embedded_chunks = None
 
-    def load_pdf(self, file_bytes: bytes) -> None:
-        """Lädt eine PDF und berechnet ihre Embeddings einmalig.
+    def load_pdf(self, file_bytes: bytes) -> dict:
+        """Lädt eine PDF, berechnet Embeddings und liefert Seiten-/Chunkanzahl.
 
         Ein erfolgreiches Laden ersetzt das vorige Dokument. Bei Fehlern
         bleibt ein zuvor geladenes Dokument erhalten.
@@ -25,6 +25,7 @@ class DocumentRetrievalPipeline:
         # Erst nach erfolgreicher Vorbereitung wird der Zustand ersetzt.
         embedded_chunks = embed_chunks(chunks)
         self._embedded_chunks = embedded_chunks
+        return {"page_count": document["page_count"], "chunk_count": len(embedded_chunks)}
 
     def search(self, query: str, top_k: int = 3) -> list[dict]:
         """Kodiert nur die Frage und sucht in den gespeicherten Chunks."""

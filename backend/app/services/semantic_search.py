@@ -41,7 +41,8 @@ def _cosine_similarity(first, second) -> float:
     if not first_norm or not second_norm:
         return 0.0
     score = sum(a * b for a, b in zip(first, second)) / (first_norm * second_norm)
-    return max(-1.0, min(1.0, score))
+    # NumPy-Skalare werden für die JSON-Ausgabe in Python-float umgewandelt.
+    return float(max(-1.0, min(1.0, score)))
 
 
 def search_chunks(query: str, chunks: list[dict], top_k: int = 3) -> list[dict]:
