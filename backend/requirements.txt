@@ -6,3 +6,4 @@ httpx
 pymupdf
 python-multipart
 sentence-transformers
+openai
