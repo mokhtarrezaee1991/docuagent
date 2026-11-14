@@ -37,3 +37,31 @@ def test_invalid_parameters(tokenizer, limit, overlap):
 
 def test_empty_pages(tokenizer):
     assert chunk_pages_by_tokens([{"page_number": 1, "text": " \n"}], tokenizer, 128) == []
+
+
+def test_numbered_sections_separate_boilerplate_and_password_rule(tokenizer):
+    """Die Regel bleibt ohne themenfremden Dokumentvorspann auffindbar."""
+    prefix = "Fiktives Testdokument mit allgemeinen Hinweisen.\n"
+    rule = "1. Passwörter und Anmeldung\nPasswörter müssen mindestens 14 Zeichen haben.\n"
+    following = "2. Datensicherung\nTäglich sichern.\n"
+    text = prefix + rule + following
+    chunks = chunk_pages_by_tokens([{"page_number": 4, "text": text}], tokenizer, 128)
+    assert [chunk["text"] for chunk in chunks] == [prefix, rule, following]
+    assert "".join(chunk["text"] for chunk in chunks) == text
+    assert [chunk["chunk_id"] for chunk in chunks] == [1, 2, 3]
+    assert all(chunk["page_number"] == 4 for chunk in chunks)
+    assert all(len(tokenizer(chunk["text"])["input_ids"]) <= 128 for chunk in chunks)
+
+
+def test_section_boundaries_preserve_initial_whitespace(tokenizer):
+    text = " \n1. Regeln\nText\n2. Weiter\nMehr Text\n"
+    chunks = chunk_pages_by_tokens([{"page_number": 1, "text": text}], tokenizer, 128)
+    assert "".join(chunk["text"] for chunk in chunks) == text
+
+
+def test_long_section_still_respects_token_limit(tokenizer):
+    text = "1. Regeln\n" + "Künstlicher Inhalt. " * 25 + "\n2. Ende\nFertig."
+    chunks = chunk_pages_by_tokens([{"page_number": 1, "text": text}], tokenizer, 128)
+    assert len(chunks) > 2
+    assert all(len(tokenizer(chunk["text"])["input_ids"]) <= 128 for chunk in chunks)
+    assert chunks[-1]["text"] == "2. Ende\nFertig."

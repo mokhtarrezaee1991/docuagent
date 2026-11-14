@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from threading import RLock
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -7,7 +8,7 @@ from pydantic import BaseModel, Field, StrictStr, field_validator
 from starlette.concurrency import run_in_threadpool
 
 from app.services.pdf_reader import extract_pdf_text
-from app.services.retrieval_pipeline import DocumentRetrievalPipeline
+from app.services.retrieval_pipeline import DocumentRetrievalPipeline, DocumentCollection
 from app.services.rag_service import generate_answer
 
 
@@ -15,8 +16,9 @@ MAX_PDF_SIZE = 10 * 1024 * 1024
 
 # Erstellt die FastAPI-Anwendung mit dem Projekttitel.
 app = FastAPI(title="DocuAgent API")
-# Ein aktives Dokument pro Prozess; ein Neustart leert diesen Speicher.
+# Dokumente pro Prozess; ein Neustart leert diesen Speicher.
 app.state.retrieval_pipeline = None
+documents_lock = RLock()
 
 
 class SearchRequest(BaseModel):
@@ -80,20 +82,70 @@ async def index_document(file: UploadFile = File(...)):
     """Bereitet eine PDF vor und ersetzt erst bei Erfolg den aktiven Index."""
     file_bytes = await read_pdf_upload(file)
     candidate = DocumentRetrievalPipeline()
+    candidate.filename = file.filename or "document.pdf"
     try:
         # Modellberechnungen blockieren nicht die Ereignisschleife der API.
         metadata = await run_in_threadpool(candidate.load_pdf, file_bytes)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-    app.state.retrieval_pipeline = candidate
+    with documents_lock:
+        app.state.retrieval_pipeline = candidate
     return metadata
+
+
+@app.post("/documents")
+async def add_document(file: UploadFile = File(...)):
+    """Fügt eine PDF hinzu, ohne erfolgreich indexierte Dokumente zu ersetzen."""
+    file_bytes = await read_pdf_upload(file)
+    candidate = DocumentRetrievalPipeline()
+    candidate.filename = file.filename or "document.pdf"
+    try:
+        await run_in_threadpool(candidate.load_pdf, file_bytes)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    with documents_lock:
+        current = app.state.retrieval_pipeline
+        if not isinstance(current, DocumentCollection):
+            collection = DocumentCollection()
+            if current is not None:
+                collection.add_prepared(current)
+            app.state.retrieval_pipeline = collection
+        return app.state.retrieval_pipeline.add_prepared(candidate)
+
+
+@app.get("/documents")
+def list_documents():
+    """Listet Metadaten aller im Prozess gespeicherten Dokumente auf."""
+    with documents_lock:
+        current = app.state.retrieval_pipeline
+        if current is None:
+            return []
+        if isinstance(current, DocumentCollection):
+            return current.list_documents()
+        return [{"document_id": current.document_id, "filename": current.filename, **current.metadata}]
+
+
+@app.delete("/documents/{document_id}")
+def remove_document(document_id: str):
+    """Entfernt ein Dokument und dessen Embeddings aus dem Prozessspeicher."""
+    with documents_lock:
+        current = app.state.retrieval_pipeline
+        if isinstance(current, DocumentCollection):
+            removed = current.remove_document(document_id)
+        else:
+            removed = current is not None and current.document_id == document_id
+            if removed:
+                app.state.retrieval_pipeline = None
+        if not removed:
+            raise HTTPException(status_code=404, detail="Das Dokument wurde nicht gefunden.")
+    return {"document_id": document_id, "deleted": True}
 
 
 @app.post("/documents/search")
 def search_document(request: SearchRequest):
     """Sucht ohne erneute Dokumentkodierung im aktuellen Prozessindex."""
     pipeline = app.state.retrieval_pipeline
-    if pipeline is None:
+    if pipeline is None or (isinstance(pipeline, DocumentCollection) and not pipeline.list_documents()):
         raise HTTPException(status_code=409, detail="Bitte indexieren Sie zuerst eine PDF-Datei.")
     return pipeline.search(request.query, top_k=request.top_k)
 

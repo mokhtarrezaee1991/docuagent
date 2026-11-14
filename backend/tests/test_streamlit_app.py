@@ -78,6 +78,8 @@ def test_ui_reruns_do_not_send_requests(monkeypatch):
     from streamlit.testing.v1 import AppTest
     post = Mock(side_effect=AssertionError("Keine Anfrage beim Rendern erwartet"))
     monkeypatch.setattr(httpx.Client, "post", post)
+    get_list = Mock(return_value=httpx.Response(200, json=[]))
+    monkeypatch.setattr(httpx.Client, "request", get_list)
     app = AppTest.from_file(ui.__file__).run()
     assert not app.exception
     assert app.title[0].value == "DocuAgent"
@@ -85,3 +87,67 @@ def test_ui_reruns_do_not_send_requests(monkeypatch):
     app.run()
     assert not app.exception
     post.assert_not_called()
+    assert get_list.call_count == 1
+
+
+def test_add_list_and_remove_document(monkeypatch):
+    document = {"document_id": "test-id", "filename": "gleich.pdf", "page_count": 1, "chunk_count": 2}
+    requests = []
+    def handler(request):
+        requests.append((request.method, request.url.path))
+        if request.method == "POST":
+            return httpx.Response(200, json=document)
+        if request.method == "GET":
+            return httpx.Response(200, json=[document])
+        return httpx.Response(200, json={"deleted": True})
+    mock_backend(monkeypatch, handler)
+    assert ui.index_pdf("gleich.pdf", b"%PDF-test", append=True) == document
+    assert ui.list_documents() == [document]
+    ui.remove_document("test-id")
+    assert requests == [("POST", "/documents"), ("GET", "/documents"), ("DELETE", "/documents/test-id")]
+
+
+def test_ui_remove_document_and_reset_chat(monkeypatch):
+    from streamlit.testing.v1 import AppTest
+    document = {"document_id": "test-id", "filename": "gleich.pdf", "page_count": 1, "chunk_count": 1}
+    requests = []
+    def handler(request):
+        requests.append(request.method)
+        return httpx.Response(200, json=[document] if request.method == "GET" else {"deleted": True})
+    mock_backend(monkeypatch, handler)
+    app = AppTest.from_file(ui.__file__).run()
+    assert not app.exception
+    assert not app.chat_input[0].disabled
+    app.session_state["messages"] = [{"role": "user", "content": "Alte Frage"}]
+    next(button for button in app.button if button.label == "Entfernen").click().run()
+    assert not app.exception
+    assert app.chat_input[0].disabled
+    assert app.session_state["messages"] == []
+    assert requests == ["GET", "DELETE"]
+
+
+def test_ui_chat_shows_document_sources(monkeypatch):
+    from streamlit.testing.v1 import AppTest
+    documents = [
+        {"document_id": identifier, "filename": "gleich.pdf", "page_count": 1, "chunk_count": 1}
+        for identifier in ("eins", "zwei")
+    ]
+    requests = []
+    def handler(request):
+        requests.append((request.method, request.url.path))
+        if request.method == "GET":
+            return httpx.Response(200, json=documents)
+        return httpx.Response(200, json={
+            "answer": "Künstliche Antwort", "sources": [{
+                "document_id": "zwei", "filename": "gleich.pdf", "page_number": 1, "chunk_id": 1
+            }],
+        })
+    mock_backend(monkeypatch, handler)
+    app = AppTest.from_file(ui.__file__).run()
+    app.chat_input[0].set_value("Testfrage").run()
+    assert not app.exception
+    assert len(app.chat_message) == 2
+    assert any("gleich.pdf · Seite 1 · Chunk 1" in text.value for text in app.text)
+    assert any("Dokument-ID: zwei" in caption.value for caption in app.caption)
+    app.run()
+    assert requests == [("GET", "/documents"), ("POST", "/documents/ask")]

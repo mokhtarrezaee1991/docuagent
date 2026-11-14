@@ -79,6 +79,7 @@ def search_embedded_chunks(
     query_embedding = _get_model().encode([query], convert_to_numpy=True)[0]
     results = [
         {
+            **{key: chunk[key] for key in ("document_id", "filename") if key in chunk},
             "chunk_id": chunk["chunk_id"],
             "page_number": chunk["page_number"],
             "text": chunk["text"],

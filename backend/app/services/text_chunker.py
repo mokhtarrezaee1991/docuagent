@@ -1,5 +1,7 @@
 """Teilt Seitentexte in überlappende Abschnitte."""
 
+import re
+
 
 def chunk_pages(
     pages: list[dict], chunk_size: int = 1000, overlap: int = 200
@@ -46,6 +48,9 @@ def chunk_pages_by_tokens(
     max_tokens umfasst spezielle Tokens. overlap zählt Inhaltstokens; bei
     ungünstigen Teilwortgrenzen kann die Überlappung kleiner ausfallen.
     Jeder fertige Text wird erneut tokenisiert und gegen das Limit geprüft.
+    Nummerierte Abschnittsüberschriften beginnen einen neuen Chunk, damit
+    beispielsweise Dokumentvorspann und Passwortregeln getrennt eingebettet
+    werden. Überlappungen bleiben innerhalb eines Abschnitts.
     Benötigt einen schnellen Tokenizer mit Zeichen-Offsets.
     """
     if isinstance(max_tokens, bool) or not isinstance(max_tokens, int):
@@ -57,7 +62,19 @@ def chunk_pages_by_tokens(
         raise ValueError("overlap muss mindestens 0 und kleiner als das Inhaltstokenlimit sein.")
 
     chunks = []
+    sections = []
     for page in pages:
+        text = page["text"]
+        # Nur zusätzliche Grenzen setzen; kein Text wird entfernt oder umgeschrieben.
+        boundaries = [0] + [
+            match.start() for match in re.finditer(r"(?m)(?=^\d+\.\s+\S)", text)
+            if match.start() > 0 and text[:match.start()].strip()
+        ] + [len(text)]
+        sections.extend(
+            {"page_number": page["page_number"], "text": text[start:end]}
+            for start, end in zip(boundaries, boundaries[1:])
+        )
+    for page in sections:
         text = page["text"]
         if not text or not text.strip():
             continue

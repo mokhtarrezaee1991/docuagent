@@ -32,11 +32,14 @@ def validate_pdf(file_bytes: bytes) -> None:
         raise ValueError("Bitte wählen Sie eine gültige PDF-Datei aus.")
 
 
-def post_backend(path: str, timeout: httpx.Timeout, **kwargs):
+def request_backend(method: str, path: str, timeout: httpx.Timeout, **kwargs):
     """Sendet genau eine Anfrage ohne Wiederholungen oder rohe Fehlerdetails."""
     try:
         with httpx.Client(timeout=timeout) as client:
-            response = client.post(f"{api_url()}{path}", **kwargs)
+            if method == "POST":
+                response = client.post(f"{api_url()}{path}", **kwargs)
+            else:
+                response = client.request(method, f"{api_url()}{path}", **kwargs)
     except httpx.TimeoutException:
         raise BackendError("Die Anfrage hat zu lange gedauert. Der Server kann noch arbeiten; bitte erneut indexieren, falls der Status unklar ist.") from None
     except httpx.RequestError:
@@ -45,6 +48,7 @@ def post_backend(path: str, timeout: httpx.Timeout, **kwargs):
     if response.is_error:
         messages = {
             400: "Die PDF ist beschädigt, ungültig oder enthält keinen lesbaren Text.",
+            404: "Das Dokument ist nicht mehr vorhanden. Bitte die Dokumentliste aktualisieren.",
             409: "Kein Dokument indexiert. Bitte die PDF erneut indexieren, etwa nach einem Backend-Neustart.",
             413: "Die Datei überschreitet das 10-MB-Limit.",
             415: "Das Backend akzeptiert ausschließlich PDF-Dateien.",
@@ -59,11 +63,35 @@ def post_backend(path: str, timeout: httpx.Timeout, **kwargs):
         raise BackendError("Das Backend hat keine gültige JSON-Antwort geliefert.") from None
 
 
-def index_pdf(filename: str, file_bytes: bytes) -> dict:
+def post_backend(path: str, timeout: httpx.Timeout, **kwargs):
+    """Behält den bisherigen POST-Helfer kompatibel bei."""
+    return request_backend("POST", path, timeout, **kwargs)
+
+
+def list_documents() -> list[dict]:
+    """Lädt die Dokumentliste nur bei Start oder ausdrücklicher Aktualisierung."""
+    result = request_backend("GET", "/documents", httpx.Timeout(10.0, connect=5.0))
+    if not isinstance(result, list) or any(
+        not isinstance(document, dict)
+        or not isinstance(document.get("document_id"), str)
+        or not isinstance(document.get("filename"), str)
+        or any(type(document.get(key)) is not int for key in ("page_count", "chunk_count"))
+        for document in result
+    ):
+        raise BackendError("Das Backend hat eine ungültige Dokumentliste geliefert.")
+    return result
+
+
+def remove_document(document_id: str) -> None:
+    """Entfernt genau das Dokument mit der ausgewählten ID."""
+    request_backend("DELETE", f"/documents/{document_id}", httpx.Timeout(10.0, connect=5.0))
+
+
+def index_pdf(filename: str, file_bytes: bytes, *, append: bool = False) -> dict:
     """Überträgt eine PDF nur nach ausdrücklicher Indexierungsaktion."""
     validate_pdf(file_bytes)
     result = post_backend(
-        "/documents/index", INDEX_TIMEOUT,
+        "/documents" if append else "/documents/index", INDEX_TIMEOUT,
         files={"file": (filename, file_bytes, "application/pdf")},
     )
     if not isinstance(result, dict) or any(
@@ -71,7 +99,12 @@ def index_pdf(filename: str, file_bytes: bytes) -> dict:
         for key in ("page_count", "chunk_count")
     ):
         raise BackendError("Das Backend hat ungültige Index-Metadaten geliefert.")
-    return {key: result[key] for key in ("page_count", "chunk_count")}
+    metadata = {key: result[key] for key in ("page_count", "chunk_count")}
+    if append:
+        if not isinstance(result.get("document_id"), str) or not isinstance(result.get("filename"), str):
+            raise BackendError("Das Backend hat keine gültige Dokument-ID geliefert.")
+        metadata.update(document_id=result["document_id"], filename=result["filename"])
+    return metadata
 
 
 def ask_question(query: str, top_k: int = 3) -> dict:
@@ -96,7 +129,9 @@ def show_message(message: dict) -> None:
             if sources:
                 with st.expander("Quellen anzeigen"):
                     for source in sources:
-                        st.write(f"Seite {source['page_number']} · Chunk {source['chunk_id']}")
+                        st.text(f"{source.get('filename', 'Dokument')} · Seite {source['page_number']} · Chunk {source['chunk_id']}")
+                        if source.get("document_id"):
+                            st.caption(f"Dokument-ID: {source['document_id']}")
             else:
                 st.caption("Keine Dokumentquelle angegeben.")
 
@@ -105,47 +140,69 @@ def main() -> None:
     """Verwaltet den UI-Zustand und sendet Anfragen nur bei Nutzeraktionen."""
     st.set_page_config(page_title="DocuAgent", page_icon="📄", layout="wide")
     st.title("DocuAgent")
-    st.write("Laden Sie ein PDF hoch und erhalten Sie Antworten mit Quellen aus Ihrem Dokument.")
-    st.caption("Lokaler Einzelbenutzer-Prototyp · Ein aktives Dokument · Keine dauerhafte Speicherung")
+    st.write("Durchsuchen Sie mehrere PDFs gemeinsam und erhalten Sie Antworten mit Dokumentquellen.")
+    st.caption("Lokaler Einzelbenutzer-Prototyp · Mehrere Dokumente · Keine dauerhafte Speicherung")
     st.session_state.setdefault("messages", [])
-    st.session_state.setdefault("document", None)
+    if "documents" not in st.session_state:
+        st.session_state.documents = []
+        try:
+            st.session_state.documents = list_documents()
+        except BackendError as error:
+            st.session_state.document_error = str(error)
 
     with st.sidebar:
-        st.header("Ihr Dokument")
-        uploaded = st.file_uploader("PDF auswählen", type=["pdf"], help="Maximal 10 MB. Eine neue Auswahl wird erst nach dem Indexieren aktiv.")
-        too_large = uploaded is not None and uploaded.size > MAX_PDF_SIZE
-        if too_large:
-            st.error("Die PDF darf maximal 10 MB groß sein.")
-        if st.button("Dokument indexieren", type="primary", disabled=uploaded is None or too_large):
+        st.header("Ihre Dokumente")
+        uploaded = st.file_uploader("PDFs auswählen", type=["pdf"], accept_multiple_files=True, help="Maximal 10 MB pro Datei. Jede Indexierung fügt ein Dokument mit eigener ID hinzu.")
+        if st.button("Dokumente indexieren", type="primary", disabled=not uploaded):
+            for file in uploaded:
+                if file.size > MAX_PDF_SIZE:
+                    st.error(f"{file.name}: Die PDF darf maximal 10 MB groß sein.")
+                    continue
+                try:
+                    with st.spinner("PDF wird gelesen und lokal indexiert …"):
+                        metadata = index_pdf(file.name, file.getvalue(), append=True)
+                    st.session_state.documents.append(metadata)
+                    st.session_state.messages = []
+                    st.session_state.pop("document_error", None)
+                    st.success(f"Indexiert: {file.name}")
+                except (ValueError, BackendError) as error:
+                    st.error(f"{file.name}: {error}")
+        if st.button("Dokumentliste aktualisieren"):
             try:
-                with st.spinner("PDF wird gelesen und lokal indexiert …"):
-                    metadata = index_pdf(uploaded.name, uploaded.getvalue())
-                st.session_state.document = {"filename": uploaded.name, **metadata}
-                st.session_state.messages = []
-            except (ValueError, BackendError) as error:
-                # Bei unklarem Serverzustand keine Fragen an ein falsches Dokument senden.
-                if isinstance(error, BackendError) and error.status_code not in (400, 413, 415, 422):
-                    st.session_state.document = None
-                st.error(str(error))
-
-        document = st.session_state.document
-        if document:
-            st.success("Dokument indexiert")
-            st.text(document["filename"])
-            left, right = st.columns(2)
-            left.metric("Seiten", document["page_count"])
-            right.metric("Chunks", document["chunk_count"])
+                refreshed = list_documents()
+                if refreshed != st.session_state.documents:
+                    st.session_state.messages = []
+                st.session_state.documents = refreshed
+                st.session_state.pop("document_error", None)
+            except BackendError as error:
+                st.session_state.document_error = str(error)
+        if st.session_state.get("document_error"):
+            st.error(st.session_state.document_error)
+        st.caption(f"{len(st.session_state.documents)} Dokumente indexiert")
+        for document in st.session_state.documents:
+            with st.container(border=True):
+                st.text(document["filename"])
+                st.caption(f"ID: {document['document_id']}")
+                st.caption(f"{document['page_count']} Seiten · {document['chunk_count']} Chunks")
+                if st.button("Entfernen", key=f"remove_{document['document_id']}"):
+                    try:
+                        remove_document(document["document_id"])
+                        st.session_state.documents = [item for item in st.session_state.documents if item["document_id"] != document["document_id"]]
+                        st.session_state.messages = []
+                        st.rerun()
+                    except BackendError as error:
+                        st.error(str(error))
         st.divider()
-        st.caption("Der Index liegt im FastAPI-Arbeitsspeicher und geht bei einem Neustart verloren. Andere Sitzungen teilen dasselbe Dokument.")
+        st.caption("Alle Dokumente liegen im FastAPI-Arbeitsspeicher und gehen bei einem Neustart verloren. Andere Sitzungen teilen denselben Index.")
 
-    st.subheader("Fragen an Ihr Dokument")
+    st.subheader("Fragen an Ihre Dokumente")
     st.caption("Das Absenden einer Frage nutzt die kostenpflichtige OpenAI API. Quellenreferenzen garantieren keine inhaltliche Richtigkeit.")
-    if not st.session_state.document:
-        st.info("Bitte zuerst eine PDF auswählen und indexieren.")
+    if not st.session_state.documents:
+        st.info("Bitte zuerst mindestens eine PDF auswählen und indexieren.")
     for message in st.session_state.messages:
         show_message(message)
 
-    query = st.chat_input("Was möchten Sie über das Dokument wissen?", disabled=not st.session_state.document)
+    query = st.chat_input("Was möchten Sie über Ihre Dokumente wissen?", disabled=not st.session_state.documents)
     if query:
         user_message = {"role": "user", "content": query}
         st.session_state.messages.append(user_message)
@@ -158,7 +215,7 @@ def main() -> None:
             show_message(message)
         except (ValueError, BackendError) as error:
             if isinstance(error, BackendError) and error.status_code == 409:
-                st.session_state.document = None
+                st.session_state.documents = []
             st.error(str(error))
 
 
