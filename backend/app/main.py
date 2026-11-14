@@ -1,9 +1,14 @@
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field, StrictStr, field_validator
 from starlette.concurrency import run_in_threadpool
 
 from app.services.pdf_reader import extract_pdf_text
 from app.services.retrieval_pipeline import DocumentRetrievalPipeline
+from app.services.rag_service import generate_answer
 
 
 MAX_PDF_SIZE = 10 * 1024 * 1024
@@ -91,3 +96,20 @@ def search_document(request: SearchRequest):
     if pipeline is None:
         raise HTTPException(status_code=409, detail="Bitte indexieren Sie zuerst eine PDF-Datei.")
     return pipeline.search(request.query, top_k=request.top_k)
+
+
+@app.post("/documents/ask")
+def ask_document(request: SearchRequest):
+    """Beantwortet eine Frage mit dem aktiven Dokument als RAG-Kontext."""
+    # Nutzt dieselbe Prüfung und Suche wie der bestehende Suchendpunkt.
+    chunks = search_document(request)
+    # Der feste Pfad funktioniert unabhängig vom Arbeitsverzeichnis.
+    # Bereits gesetzte Umgebungsvariablen behalten Vorrang.
+    load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env", override=False)
+    if not os.environ.get("OPENAI_API_KEY", "").strip():
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY ist für die Antwortgenerierung nicht konfiguriert.")
+    try:
+        return generate_answer(request.query, chunks)
+    except RuntimeError:
+        # Keine internen Fehlerdetails oder vertraulichen Daten weitergeben.
+        raise HTTPException(status_code=502, detail="Die KI-Antwort konnte nicht erstellt werden. Bitte API-Zugang und Verbindung prüfen.") from None

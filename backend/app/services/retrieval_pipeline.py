@@ -1,7 +1,8 @@
 """Verbindet PDF-Extraktion, Chunking und lokale semantische Suche."""
 
 from app.services.pdf_reader import extract_pdf_text
-from app.services.text_chunker import chunk_pages
+from app.services.text_chunker import chunk_pages_by_tokens
+from app.services import semantic_search
 from app.services.semantic_search import embed_chunks, search_embedded_chunks
 
 
@@ -18,9 +19,12 @@ class DocumentRetrievalPipeline:
         bleibt ein zuvor geladenes Dokument erhalten.
         """
         document = extract_pdf_text(file_bytes)
-        chunks = chunk_pages(document["pages"])
-        if not chunks:
+        if not any(page["text"].strip() for page in document["pages"]):
             raise ValueError("Die PDF-Datei enthält keinen extrahierbaren Text.")
+        model = semantic_search._get_model()
+        chunks = chunk_pages_by_tokens(
+            document["pages"], model.tokenizer, model.max_seq_length
+        )
 
         # Erst nach erfolgreicher Vorbereitung wird der Zustand ersetzt.
         embedded_chunks = embed_chunks(chunks)

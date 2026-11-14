@@ -22,12 +22,14 @@ def make_pdf(*texts):
 
 
 @pytest.fixture
-def api(monkeypatch):
+def api(monkeypatch, tokenizer):
     """Stellt den vorherigen Zustand nach jedem Test automatisch wieder her."""
     previous_pipeline = getattr(app.state, "retrieval_pipeline", None)
     app.state.retrieval_pipeline = None
     vectors = {"Urlaub": [1.0, 0.0], "Rechnung": [0.0, 1.0]}
     model = Mock()
+    model.tokenizer = tokenizer
+    model.max_seq_length = 128
     model.encode.side_effect = lambda texts, **kwargs: [vectors[text.strip()] for text in texts]
     monkeypatch.setattr(semantic_search, "_get_model", lambda: model)
     try:

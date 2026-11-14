@@ -20,9 +20,11 @@ def make_pdf(*texts):
 
 
 @pytest.fixture
-def model(monkeypatch):
+def model(monkeypatch, tokenizer):
     vectors = {"Urlaub": [1.0, 0.0], "Rechnung": [0.0, 1.0]}
     model = Mock()
+    model.tokenizer = tokenizer
+    model.max_seq_length = 128
     model.encode.side_effect = lambda texts, **kwargs: [vectors[text.strip()] for text in texts]
     monkeypatch.setattr(semantic_search, "_get_model", lambda: model)
     return model
