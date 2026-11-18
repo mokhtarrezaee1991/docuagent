@@ -96,6 +96,35 @@ DocuAgent is currently a local development prototype.
 
 ## Getting Started
 
+### Retrieval-Evaluation
+
+Der Datensatz [retrieval_questions.json](data/evaluation/retrieval_questions.json)
+enthält 20 Fragen mit überprüfbaren Textbelegen aus den beiden künstlichen PDFs.
+Die Evaluation verändert weder die RAG-Pipeline noch die SQLite-Dokumente.
+Sie verwendet nur das vorhandene lokale Embedding-Modell und keine OpenAI API.
+
+Aus `backend` ausführen:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py
+.\.venv\Scripts\python.exe -m pytest -v
+```
+
+Der tatsächlich ausgeführte lokale Modelllauf ergab **Hit Rate@1: 75 %**,
+**Hit Rate@3: 95 %** und **MRR: 0,8625** bei 20 Fragen und 18 Chunks.
+Die vollständigen Fragen, erwarteten Quellen, Ränge und Scores stehen im
+[Evaluationsbericht](docs/retrieval_evaluation.md); der
+[JSON-Bericht](docs/retrieval_evaluation.json) enthält zusätzlich alle Rangfolgen
+und Fingerabdrücke der Eingabedateien. Ein erneuter Lauf überschreibt diese Berichte.
+Automatisierte Validierung: **182 Tests bestanden** (`python -m pytest -v`).
+
+Hit Rate@1/3 misst, wie oft ein belegender Chunk unter den ersten 1/3 Treffern liegt.
+MRR mittelt den Kehrwert des ersten relevanten Rangs: Rang 1 ergibt 1, Rang 2 ergibt
+0,5, ein fehlender Treffer 0. Die Auswertung nutzt die vollständige Rangliste.
+Dateiname, Seite und Textbelege bestimmen die Relevanz; Beispielfragen ohne Antwort
+zählen nicht. Alternative gültige Quellen sind zugelassen. Der kleine Datensatz
+misst ausschließlich Retrieval auf diesen Testdokumenten, keine LLM-Antwortqualität.
+
 ### Lokale SQLite-Speicherung testen
 
 Die Datenbank wird beim FastAPI-Start automatisch unter

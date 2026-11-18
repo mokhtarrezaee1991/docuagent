@@ -1,0 +1,3049 @@
+{
+  "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "sentence_transformers_version": "6.3.0",
+  "dataset_sha256": "2513dc5bc7d373ec2e9e3d426d778d4753e5844f3decf1291a1e0c34dbfc7d34",
+  "documents": [
+    {
+      "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+      "filename": "DocuAgent_Testdokument.pdf",
+      "page_count": 3,
+      "chunk_count": 12,
+      "sha256": "6fc61e074fa36f31d6a3c0b549ee26c3bb5388dbb78c2807a0cbe7b9b2fa09a9"
+    },
+    {
+      "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+      "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+      "page_count": 1,
+      "chunk_count": 6,
+      "sha256": "8dd3e4f86e915c79489f474074f3860483fa37ca6da5bcdb3acf2ebb624a7c49"
+    }
+  ],
+  "metrics": {
+    "question_count": 20,
+    "hit_rate_at_1": 0.75,
+    "hit_rate_at_3": 0.95,
+    "mrr": 0.8625
+  },
+  "questions": [
+    {
+      "id": "Q01",
+      "query": "Wie viele Urlaubstage haben Mitarbeiter pro Jahr?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 1,
+          "section": "Urlaub und Arbeitszeit",
+          "evidence": [
+            "30 bezahlte Urlaubstage pro Kalenderjahr bei einer Fünf-Tage-Woche"
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.7107569575309753,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 2,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.7107569575309753
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.6244470477104187
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.33700382709503174
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.3170926868915558
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.30975717306137085
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.21606478095054626
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.1497344821691513
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.13452573120594025
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.12789393961429596
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.08622293919324875
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.0769120454788208
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.06920807808637619
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": -0.0310487262904644
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": -0.034394193440675735
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": -0.04315560311079025
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": -0.050772055983543396
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": -0.05211189016699791
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": -0.09453672915697098
+        }
+      ]
+    },
+    {
+      "id": "Q02",
+      "query": "Wie früh muss ich einen Urlaubsantrag einreichen?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 1,
+          "section": "Urlaubsanträge",
+          "evidence": [
+            "Urlaubsanträge müssen mindestens 14 Kalendertage vor dem geplanten Beginn"
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.6086688041687012,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 2,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.6086688041687012
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.5495108366012573
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.4997793734073639
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.3553324043750763
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.313180536031723
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.3108997046947479
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.20648880302906036
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.12812936305999756
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.12035360932350159
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.06934962421655655
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.06653080135583878
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": -0.035652291029691696
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": -0.03793315216898918
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": -0.05892495810985565
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": -0.08051423728466034
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": -0.08091579377651215
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": -0.08212964981794357
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": -0.09475197643041611
+        }
+      ]
+    },
+    {
+      "id": "Q03",
+      "query": "Wie viele Stunden beträgt die reguläre Wochenarbeitszeit?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 1,
+          "section": "Arbeitszeit",
+          "evidence": [
+            "Die reguläre Wochenarbeitszeit beträgt 38 Stunden."
+          ]
+        }
+      ],
+      "rank": 2,
+      "similarity_score": 0.6716294288635254,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 2,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.7249894142150879
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.6716294288635254
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.3839924931526184
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.3074609935283661
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.293234646320343
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.2900403141975403
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.1646871268749237
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.15503576397895813
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.1450219303369522
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.1425480991601944
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.1221550703048706
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.05135229602456093
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.042493123561143875
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.031375590711832047
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.025919219478964806
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.0214445348829031
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": -0.04078473150730133
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": -0.052089277654886246
+        }
+      ]
+    },
+    {
+      "id": "Q04",
+      "query": "Wann müssen Lieferantenrechnungen bezahlt werden?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 2,
+          "section": "Rechnungen und Einkauf",
+          "evidence": [
+            "innerhalb von 14 Kalendertagen nach Eingang einer ordnungsgemäßen Rechnung"
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.8431947231292725,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 5,
+        "page_number": 2
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.8431947231292725
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.4188888370990753
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.4016766846179962
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.34062379598617554
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.32105568051338196
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.3019583523273468
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.265134334564209
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.26212078332901
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.24204686284065247
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.22985026240348816
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.19928905367851257
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.1710832715034485
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.08933738619089127
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.07399147003889084
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.057092368602752686
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.012984330765902996
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.005576662253588438
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": -0.02375776879489422
+        }
+      ]
+    },
+    {
+      "id": "Q05",
+      "query": "Bei welchem Bestellwert ist die Freigabe der Einkaufsleitung erforderlich?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 2,
+          "section": "Freigabe von Bestellungen",
+          "evidence": [
+            "Netto-Warenwert über 2.500 Euro",
+            "Freigabe durch die Einkaufsleitung"
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.6572890281677246,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 5,
+        "page_number": 2
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.6572890281677246
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.37847378849983215
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.3486800491809845
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.3057120144367218
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.28900790214538574
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.27698245644569397
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.2414020299911499
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.23384417593479156
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.2183573842048645
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.21537840366363525
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.20818442106246948
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.20258374512195587
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.18684209883213043
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.16546794772148132
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.11774873733520508
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.03142156824469566
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.016152940690517426
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.012742746621370316
+        }
+      ]
+    },
+    {
+      "id": "Q06",
+      "query": "Ab welchem Betrag muss die Geschäftsführung einer Bestellung zusätzlich zustimmen?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 2,
+          "section": "Zustimmung der Geschäftsführung",
+          "evidence": [
+            "Ab 10.000 Euro ist zusätzlich die Zustimmung der Geschäftsführung notwendig."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.583128035068512,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 5,
+        "page_number": 2
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.583128035068512
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.463519424200058
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.34908029437065125
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.3453592360019684
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.28786414861679077
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.28404635190963745
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.2526538670063019
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.24483689665794373
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.24294593930244446
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.2315768003463745
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.1966773420572281
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.1691529005765915
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.14243260025978088
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.12076424807310104
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.06311610341072083
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.05563264712691307
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.04970605671405792
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": -0.0016336499247699976
+        }
+      ]
+    },
+    {
+      "id": "Q07",
+      "query": "An welchem Wochentag wird der Projektstatusbericht erstellt?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 2,
+          "section": "Projektmanagement",
+          "evidence": [
+            "Ein Statusbericht wird jeweils am Freitag erstellt."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.7399991154670715,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 7,
+        "page_number": 2
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.7399991154670715
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.5505189299583435
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.47800174355506897
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.4575815498828888
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.3769887089729309
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.3758522570133209
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.36973151564598083
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.3558923006057739
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.3177070915699005
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.2710321545600891
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.2628574073314667
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.23881177604198456
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.22718454897403717
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.22668826580047607
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.1871020346879959
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.09646941721439362
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.08978988975286484
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": -0.013208851218223572
+        }
+      ]
+    },
+    {
+      "id": "Q08",
+      "query": "Welche Programmiersprache wird überwiegend für interne Automatisierungen verwendet?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 3,
+          "section": "Softwareentwicklung und Automatisierung",
+          "evidence": [
+            "Für interne Automatisierungen verwendet das Entwicklungsteam überwiegend Python."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.6536980271339417,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 11,
+        "page_number": 3
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.6536980271339417
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.5923970937728882
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.3105519711971283
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.29329702258110046
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.26507651805877686
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.24787375330924988
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.24733857810497284
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.22834113240242004
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.20085126161575317
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.1862945258617401
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.16655229032039642
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.1585874855518341
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.1563628762960434
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.1558944582939148
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.1544645130634308
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.13655412197113037
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.08214064687490463
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.07360843569040298
+        }
+      ]
+    },
+    {
+      "id": "Q09",
+      "query": "Welche Prüfungen brauchen Änderungen am produktiven Code?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 3,
+          "section": "Code-Review und Tests",
+          "evidence": [
+            "Änderungen am produktiven Code erfordern ein Code-Review und erfolgreich ausgeführte automatisierte Tests."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.6207596659660339,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 11,
+        "page_number": 3
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.6207596659660339
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.3971085846424103
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.3885522782802582
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.3792988061904907
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.36986973881721497
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.35890957713127136
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.3457068204879761
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.34227997064590454
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.3153662085533142
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.2952766716480255
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.29355862736701965
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.2702130973339081
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.2627538740634918
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.22334399819374084
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.1874212622642517
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.14230993390083313
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.13799656927585602
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.06374065577983856
+        }
+      ]
+    },
+    {
+      "id": "Q10",
+      "query": "Wer muss bei kritischen Entscheidungen über neue KI-Funktionen die Freigabe geben?",
+      "references": [
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 3,
+          "section": "Prüfung neuer KI-Funktionen",
+          "evidence": [
+            "Bei kritischen Entscheidungen ist eine menschliche Freigabe erforderlich."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.6066353917121887,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 11,
+        "page_number": 3
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.6066353917121887
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.5822295546531677
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.5388803482055664
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.418834924697876
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.3401981592178345
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.3340587913990021
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.3263377249240875
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.3234281539916992
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.29814761877059937
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.2761462926864624
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.2364446222782135
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.18783308565616608
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.1810898631811142
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.17955388128757477
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.10193626582622528
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.0903247743844986
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.08940236270427704
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.08926903456449509
+        }
+      ]
+    },
+    {
+      "id": "Q11",
+      "query": "Wie lang muss ein Passwort sein?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Passwörter und Anmeldung",
+          "evidence": [
+            "Passwörter mit mindestens 14 Zeichen verwenden."
+          ]
+        }
+      ],
+      "rank": 2,
+      "similarity_score": 0.5104441046714783,
+      "matched_source": {
+        "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+        "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+        "chunk_id": 2,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.5222597122192383
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.5104441046714783
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.4566238224506378
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.3928130269050598
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.3871232867240906
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.38245949149131775
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.3366861045360565
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.3140120208263397
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.3113563358783722
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.2513412833213806
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.1849953979253769
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.16470657289028168
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.16301687061786652
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.15055114030838013
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.10443836450576782
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.02591008134186268
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.00812205858528614
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": -0.0026567084714770317
+        }
+      ]
+    },
+    {
+      "id": "Q12",
+      "query": "Ist Mehrfaktor-Authentifizierung für alle Unternehmenskonten vorgeschrieben?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Passwörter und Anmeldung",
+          "evidence": [
+            "Für alle Unternehmenskonten ist die Mehrfaktor-Authentifizierung (MFA) verpflichtend."
+          ]
+        },
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 3,
+          "section": "IT-Sicherheit und Datenverarbeitung",
+          "evidence": [
+            "Alle Mitarbeitenden müssen für Unternehmenskonten die Mehrfaktor-Authentifizierung (MFA) verwenden."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.5236740112304688,
+      "matched_source": {
+        "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+        "filename": "DocuAgent_Testdokument.pdf",
+        "chunk_id": 9,
+        "page_number": 3
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.5236740112304688
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.4743717312812805
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.3823156952857971
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.3451967239379883
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.33381178975105286
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.3322727680206299
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.3273645341396332
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.26129886507987976
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.2531118392944336
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.2530340850353241
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.19323456287384033
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.19231216609477997
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.19164738059043884
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.17893531918525696
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.17557644844055176
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.06899835169315338
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.03443358093500137
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.009585355408489704
+        }
+      ]
+    },
+    {
+      "id": "Q13",
+      "query": "Innerhalb welcher Frist muss ein verlorener Firmenlaptop gemeldet werden?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Sicherheitsvorfälle melden",
+          "evidence": [
+            "verlorene Laptops",
+            "innerhalb von zwei Stunden nach Entdeckung an das IT-Sicherheitsteam melden."
+          ]
+        },
+        {
+          "filename": "DocuAgent_Testdokument.pdf",
+          "page_number": 3,
+          "section": "IT-Sicherheit und Datenverarbeitung",
+          "evidence": [
+            "Verlust eines Firmenlaptops",
+            "innerhalb von zwei Stunden nach Entdeckung an das IT-Sicherheitsteam gemeldet werden."
+          ]
+        }
+      ],
+      "rank": 4,
+      "similarity_score": 0.48026883602142334,
+      "matched_source": {
+        "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+        "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+        "chunk_id": 3,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.5504772663116455
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.5122848153114319
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.4920235872268677
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.48026883602142334
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.4433710277080536
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.3948560655117035
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.37768152356147766
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.3540438115596771
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.34613555669784546
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.3333400785923004
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.33323559165000916
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.291965126991272
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.1961260735988617
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.1764269471168518
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.17515961825847626
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.16743887960910797
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.1604960411787033
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.0863557830452919
+        }
+      ]
+    },
+    {
+      "id": "Q14",
+      "query": "Über welchen Kanal sollen Sicherheitsvorfälle gemeldet werden?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Sicherheitsvorfälle melden",
+          "evidence": [
+            "Die Meldung erfolgt über das interne Ticketsystem"
+          ]
+        }
+      ],
+      "rank": 2,
+      "similarity_score": 0.5672480463981628,
+      "matched_source": {
+        "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+        "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+        "chunk_id": 3,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.5684569478034973
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.5672480463981628
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.5092758536338806
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.4596391022205353
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.41104304790496826
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.4022718667984009
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.36159807443618774
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.3226865231990814
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.3165801167488098
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.29742854833602905
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.1734258234500885
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.16906912624835968
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.16465874016284943
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.16398051381111145
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.13049720227718353
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.11855859309434891
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.11089716106653214
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.10143757611513138
+        }
+      ]
+    },
+    {
+      "id": "Q15",
+      "query": "Nach wie vielen Minuten ohne Benutzung müssen sich Dienstgeräte automatisch sperren?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Geräte und Software",
+          "evidence": [
+            "Dienstgeräte müssen automatisch gesperrt werden, wenn sie fünf Minuten nicht benutzt wurden."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.7882704734802246,
+      "matched_source": {
+        "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+        "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+        "chunk_id": 4,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.7882704734802246
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.6057023406028748
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.5426495671272278
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.5303382277488708
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.5262743830680847
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.5193814039230347
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.4896184802055359
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.4321792721748352
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.371279239654541
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.36845535039901733
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.3512691259384155
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.31627368927001953
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.3119620680809021
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.27212926745414734
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.15859238803386688
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.07579363137483597
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.03430883586406708
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.03155474364757538
+        }
+      ]
+    },
+    {
+      "id": "Q16",
+      "query": "Wie schnell müssen von der IT freigegebene Sicherheitsupdates installiert werden?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Geräte und Software",
+          "evidence": [
+            "Sicherheitsupdates sind innerhalb von sieben Kalendertagen nach Freigabe durch die IT zu installieren."
+          ]
+        }
+      ],
+      "rank": 2,
+      "similarity_score": 0.667465090751648,
+      "matched_source": {
+        "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+        "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+        "chunk_id": 4,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.7306702733039856
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.667465090751648
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.6311526298522949
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.561132550239563
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.5570709109306335
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.48099008202552795
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.41133004426956177
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.394707053899765
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.3745056390762329
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.35170355439186096
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.3331849277019501
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.29795709252357483
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.20971575379371643
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.1939467191696167
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.11564699560403824
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.08998808264732361
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.025014644488692284
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.024914421141147614
+        }
+      ]
+    },
+    {
+      "id": "Q17",
+      "query": "Darf ich einen privaten USB-Stick an ein Dienstgerät anschließen?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Geräte und Software",
+          "evidence": [
+            "Private USB-Sticks dürfen nicht an Dienstgeräte angeschlossen werden."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.5215606093406677,
+      "matched_source": {
+        "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+        "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+        "chunk_id": 4,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.5215606093406677
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.44155609607696533
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.3829653859138489
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.3554392158985138
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.35245761275291443
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.2767852246761322
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.26951974630355835
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.2175801694393158
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.18876913189888
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.1879740059375763
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.11488433182239532
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.09004343301057816
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.0802360251545906
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.05505344271659851
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.048155587166547775
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.006277737207710743
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.0027936033438891172
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": -0.012146268971264362
+        }
+      ]
+    },
+    {
+      "id": "Q18",
+      "query": "Zu welcher Uhrzeit werden die zentralen Projektdaten automatisch gesichert?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Datensicherung",
+          "evidence": [
+            "täglich um 02:00 Uhr eine automatische Datensicherung der zentralen Projektdaten"
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.7013821005821228,
+      "matched_source": {
+        "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+        "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+        "chunk_id": 6,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.7013821005821228
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.6278587579727173
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.503929853439331
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.4965253174304962
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.4860982596874237
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.47085145115852356
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.43600964546203613
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.42276132106781006
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.38935649394989014
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.36086106300354004
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.3506552577018738
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.30915534496307373
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.2573831379413605
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.23830151557922363
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.16131170094013214
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.1601647585630417
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.08595315366983414
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.07980247586965561
+        }
+      ]
+    },
+    {
+      "id": "Q19",
+      "query": "Wie lange werden die Datensicherungen aufbewahrt?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Datensicherung",
+          "evidence": [
+            "Die Sicherungen werden 30 Tage aufbewahrt."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.7131397128105164,
+      "matched_source": {
+        "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+        "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+        "chunk_id": 6,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.7131397128105164
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.5678998231887817
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.5253896117210388
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.46847003698349
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.46041011810302734
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.44467833638191223
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.4078212082386017
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.3968835175037384
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.3667997717857361
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.34806516766548157
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.34399867057800293
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.30261892080307007
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.30258503556251526
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.2969875633716583
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.2357354611158371
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.0689103901386261
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.06643769890069962
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.06282906234264374
+        }
+      ]
+    },
+    {
+      "id": "Q20",
+      "query": "Wie oft findet ein Wiederherstellungstest für die Datensicherung statt?",
+      "references": [
+        {
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "page_number": 1,
+          "section": "Datensicherung",
+          "evidence": [
+            "Ein Wiederherstellungstest wird einmal pro Quartal durchgeführt."
+          ]
+        }
+      ],
+      "rank": 1,
+      "similarity_score": 0.605046808719635,
+      "matched_source": {
+        "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+        "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+        "chunk_id": 6,
+        "page_number": 1
+      },
+      "ranking": [
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 6,
+          "page_number": 1,
+          "similarity_score": 0.605046808719635
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 9,
+          "page_number": 3,
+          "similarity_score": 0.4503310024738312
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 12,
+          "page_number": 3,
+          "similarity_score": 0.4304429888725281
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.4103586673736572
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.4021053612232208
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 11,
+          "page_number": 3,
+          "similarity_score": 0.3729947805404663
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 6,
+          "page_number": 2,
+          "similarity_score": 0.36417287588119507
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 4,
+          "page_number": 1,
+          "similarity_score": 0.3461966812610626
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 7,
+          "page_number": 2,
+          "similarity_score": 0.3461105227470398
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 5,
+          "page_number": 2,
+          "similarity_score": 0.33506494760513306
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 4,
+          "page_number": 2,
+          "similarity_score": 0.2959846556186676
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.2938569188117981
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 8,
+          "page_number": 3,
+          "similarity_score": 0.2900356948375702
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 5,
+          "page_number": 1,
+          "similarity_score": 0.2583310902118683
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 3,
+          "page_number": 1,
+          "similarity_score": 0.24141673743724823
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 1,
+          "page_number": 1,
+          "similarity_score": 0.23312190175056458
+        },
+        {
+          "document_id": "61a8180e-efcc-41b0-bc60-afdda1cc49bc",
+          "filename": "DocuAgent_IT_Sicherheitsrichtlinie.pdf",
+          "chunk_id": 2,
+          "page_number": 1,
+          "similarity_score": 0.2045975923538208
+        },
+        {
+          "document_id": "ccc6eaa8-b066-4619-9c2d-3126f4d6b2fa",
+          "filename": "DocuAgent_Testdokument.pdf",
+          "chunk_id": 10,
+          "page_number": 3,
+          "similarity_score": 0.19276085495948792
+        }
+      ]
+    }
+  ],
+  "method": "Erster Chunk mit korrektem Dateinamen, Seite und allen Textbelegen; MRR über alle Chunks. Keine LLM-Bewertung."
+}
