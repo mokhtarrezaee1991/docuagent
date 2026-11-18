@@ -254,6 +254,92 @@ Standardumstellung gerechtfertigt ist. Es gab keine nachträgliche Optimierung
 der RRF-Gewichte, keine LLM-Aufrufe und keine Änderungen an `.env` oder SQLite.
 Validierung: **212 Tests bestanden**, `pip check` ohne Abhängigkeitsprobleme.
 
+### Evaluation der RAG-Antwortqualität
+
+`backend/scripts/evaluate_answers.py` verwendet eine eigene Speichersammlung mit den
+beiden künstlichen PDFs, Semantic Search und `top_k=3`. Die SQLite-Nutzerdaten und
+`.env` werden nicht geöffnet oder verändert. Die Antwortgenerierung erhält nur Frage
+und gefundene Chunks, niemals Sollantworten oder Bewertungsmuster.
+
+Der Datensatz [answer_questions.json](data/evaluation/answer_questions.json) enthält
+20 überprüfbare Sollantworten mit Quellenverweisen auf die bestehende
+Retrieval-Referenzdatei und vier manuell am vollständigen PDF-Text geprüfte
+Nichtwissen-Fragen (Gehalt, IT-Telefonnummer, Passwortmanager, Umsatz). Alle
+beantwortbaren Quellenbelege werden vor dem Lauf gegen die PDF-Extraktion validiert.
+
+**Zwei getrennte Bewertungsebenen:**
+
+| Kriterium | Deterministische Teilprüfung | Semantische Prüfung durch Mensch oder separat freigegebenen LLM-Judge |
+| --- | --- | --- |
+| Answer Correctness | Regex-Prüfung wichtiger Zahlen/Begriffe (`correctness_fact_match_proxy`) | Ist die gesamte Antwort richtig und vollständig, einschließlich Bedingungen? |
+| Faithfulness | Prüfen, ob der Retrieval-Kontext den Sollbeleg enthält | Folgt jede Tatsachenbehauptung aus den tatsächlich übergebenen Chunks? |
+| Citation Accuracy | IDs/Dateiname gegen Kontext prüfen; erwarteten Beleg in zitierten Chunks suchen | Belegt jede angegebene Quelle tatsächlich die zugehörige Aussage? |
+| Abstention | Explizite Nichtwissen-Formulierung und leere Quellenliste erkennen | Wurde bei wirklich fehlender Information korrekt und ohne erfundene Zusätze verweigert? |
+
+Die semantische [Review-Rubrik](data/evaluation/answer_review_rubric.json) definiert
+pro Kriterium 0 (nicht erfüllt), 1 (teilweise) oder 2 (vollständig). Im Bericht
+bleiben diese Werte `null`, bis sie separat bewertet werden. Das Skript ruft
+**keinen LLM-Judge** auf. Ein Regex-Treffer kann auch in einer falschen Aussage
+stehen; gültige Quellen-IDs beweisen keine Faithfulness. Bei einer Verweigerung
+wegen eines Retrieval-Fehlers kann Faithfulness gut, Answer Correctness aber
+schlecht sein. Bericht und Rubrik unterscheiden deshalb fehlenden Dokumentinhalt
+von fehlendem Retrieval-Kontext.
+
+**Zuerst Dry-Run aus `backend`:**
+
+```powershell
+.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode dry-run
+# Vorschau genau der späteren drei Live-Fragen:
+.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode dry-run --ids A01 A11 A21
+```
+
+Standard ist `dry-run`. Er berechnet nur Retrieval und eine Kostenschätzung;
+Antworten und Qualitätsraten bleiben unbewertet. Der ausgeführte Dry-Run umfasst
+24 Fragen und findet für 19 von 20 beantwortbaren Fragen einen Sollbeleg im
+Top-3-Kontext. **0 OpenAI-Aufrufe, 0 generierte Antworten.** Der
+[JSON-Bericht](docs/answer_evaluation_dry-run.json) enthält Sollantworten, Quellen,
+tatsächlichen Kontext und ausfüllbare Review-Felder. `--output` wählt einen anderen
+Berichtspfad; ein erneuter Lauf überschreibt den gewählten Bericht.
+
+**Erst nach ausdrücklicher Freigabe: kontrollierter Live-Test mit höchstens drei Fragen:**
+
+```powershell
+# OPENAI_API_KEY muss bereits sicher in der Prozessumgebung gesetzt sein.
+# Keine Schlüssel in Befehle, Quellcode oder Logs schreiben.
+.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode live --confirm-live --max-calls 3 --ids A01 A11 A21
+```
+
+Das prüft Urlaub, Passwortlänge und eine nicht enthaltene Gehaltsinformation.
+Ohne `--confirm-live` bricht Live vor der Modellvorbereitung ab. `--max-calls`
+akzeptiert ausschließlich 1 bis 3. Ohne `--ids` werden höchstens die ersten drei
+Fragen ausgeführt; weitere Fragen stehen als übersprungen im Bericht. Bei einem
+API-Fehler endet die Generierung sofort, ohne automatische Wiederholung.
+`generate_answer()` begrenzt jede Antwort auf 1.000 Outputtokens und deaktiviert
+SDK-Wiederholungen. Der Live-Bericht heißt standardmäßig
+`docs/answer_evaluation_live.json`. Bei fehlendem Umgebungs-Schlüssel wird keine
+Anfrage gesendet; dieses Skript lädt keine `.env`.
+
+Vor jedem Live-Lauf erscheinen Frage-IDs, Aufruflimit und Kostenschätzung. Die
+Inputtokenzahl ist eine grobe UTF-8-Bytes/3-Heuristik einschließlich Prompt/Schema
+plus Reserve; Output wird mit 1.000 Tokens pro Frage geschätzt. Verwendete Tarife
+(geprüft 18.11.2026): 0,40 USD pro Million Inputtokens und 1,60 USD pro Million
+Outputtokens für [gpt-4.1-mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
+Die Schätzung ist **keine Preisgarantie und keine harte Dollar-Ausgabengrenze**;
+Tarife vor einem echten Lauf prüfen. Tatsächliche Kosten werden nicht erfunden
+und bleiben im Bericht `null`, da der bestehende RAG-Service keine Usage-Daten
+zurückgibt.
+
+Für die Nachprüfung speichert der Bericht Fingerabdrücke von Datensätzen, Rubrik
+und System-Prompt sowie den tatsächlich verwendeten Kontext. LLM-Antworten können
+bei Wiederholung variieren. Teilmetriken haben explizite Nenner; Fehler und
+ausgelassene Fragen werden separat gezählt. Manuelle Reviews sollen jede Bewertung
+mit Textstellen begründen. Ein späterer LLM-Judge benötigt eine eigene Freigabe und
+ein eigenes Kostenbudget. Ergebnisse auf diesen künstlichen PDFs müssen mit
+unabhängigen Fragen bestätigt werden.
+
+Validierung nach dieser Erweiterung: **231 Tests bestanden**. Alle Live-Pfade
+wurden dabei ausschließlich mit gemockter OpenAI API geprüft.
+
 ### Lokale SQLite-Speicherung testen
 
 Die Datenbank wird beim FastAPI-Start automatisch unter
