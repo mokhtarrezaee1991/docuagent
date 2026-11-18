@@ -70,6 +70,28 @@ def test_legacy_replace_survives_restart(model):
         assert len(client.get("/documents").json()) == 2
 
 
+def test_restart_preserves_vectors_and_only_encodes_question(model, monkeypatch):
+    """Extraktion, Chunking und Dokumentkodierung dürfen beim Neustart nicht laufen."""
+    from app.services import retrieval_pipeline
+
+    with TestClient(main.app) as client:
+        add(client, "Urlaub")
+        add(client, "Rechnung")
+        records_before = main.app.state.document_store.load_documents()
+        hits_before = client.post("/documents/search", json={"query": "Urlaub"}).json()
+    forbidden = Mock(side_effect=AssertionError("Gespeicherte Dokumente nicht neu verarbeiten"))
+    for name in ("extract_pdf_text", "chunk_pages_by_tokens", "embed_chunks"):
+        monkeypatch.setattr(retrieval_pipeline, name, forbidden)
+    model.encode.reset_mock()
+    with TestClient(main.app) as client:
+        assert main.app.state.document_store.load_documents() == records_before
+        model.encode.assert_not_called()
+        hits = client.post("/documents/search", json={"query": "Urlaub"}).json()
+        assert hits == hits_before
+        model.encode.assert_called_once_with(["Urlaub"], convert_to_numpy=True)
+    forbidden.assert_not_called()
+
+
 def test_database_failure_keeps_memory_and_persistent_data(model, monkeypatch):
     with TestClient(main.app) as client:
         first = add(client, "Urlaub")

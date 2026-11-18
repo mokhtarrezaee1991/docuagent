@@ -15,7 +15,7 @@ class CharacterTokenizer:
     def num_special_tokens_to_add(self, pair=False):
         return 2
 
-    def __call__(self, text, add_special_tokens=True, truncation=False, return_offsets_mapping=False):
+    def __call__(self, text, add_special_tokens=True, truncation=False, return_offsets_mapping=False, verbose=True):
         result = {"input_ids": list(range(len(text) + (2 if add_special_tokens else 0)))}
         if return_offsets_mapping:
             result["offset_mapping"] = [(index, index + 1) for index in range(len(text))]

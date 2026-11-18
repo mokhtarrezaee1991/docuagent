@@ -81,15 +81,17 @@ def chunk_pages_by_tokens(
         start = 0
         while start < len(text):
             remaining = text[start:]
+            # Dies ist nur eine Längen-/Offsetanalyse, noch keine Modelleingabe.
+            # Überlange Zwischenstände sind gewollt; fertige Chunks prüfen wir unten.
             encoded = tokenizer(
                 remaining, add_special_tokens=False, truncation=False,
-                return_offsets_mapping=True,
+                return_offsets_mapping=True, verbose=False,
             )
             offsets = encoded["offset_mapping"]
             # Bis zum Beginn des nächsten Tokens bleiben auch Leerzeichen erhalten.
             end = len(text) if len(offsets) <= capacity else start + offsets[capacity][0]
             # Erneutes Tokenisieren eines Ausschnitts kann andere Teilwörter erzeugen.
-            while end > start and len(tokenizer(text[start:end], truncation=False)["input_ids"]) > max_tokens:
+            while end > start and len(tokenizer(text[start:end], truncation=False, verbose=False)["input_ids"]) > max_tokens:
                 end -= 1
             if end <= start:
                 raise ValueError("Das Tokenlimit reicht nicht für den nächsten Textabschnitt.")
@@ -101,7 +103,7 @@ def chunk_pages_by_tokens(
 
             chunk_offsets = tokenizer(
                 content, add_special_tokens=False, truncation=False,
-                return_offsets_mapping=True,
+                return_offsets_mapping=True, verbose=False,
             )["offset_mapping"]
             next_start = end
             if overlap and chunk_offsets:
