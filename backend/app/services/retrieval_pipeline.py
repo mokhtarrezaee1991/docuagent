@@ -6,7 +6,8 @@ from uuid import uuid4
 from app.services.pdf_reader import extract_pdf_text
 from app.services.text_chunker import chunk_pages_by_tokens
 from app.services import semantic_search
-from app.services.semantic_search import embed_chunks, search_embedded_chunks
+from app.services.semantic_search import embed_chunks
+from app.services.hybrid_search import BM25Index, retrieval_mode, search_prepared
 
 
 class DocumentRetrievalPipeline:
@@ -17,6 +18,7 @@ class DocumentRetrievalPipeline:
         self.document_id = str(uuid4())
         self.filename = "document.pdf"
         self.metadata = None
+        self._keyword_index = None
 
     def load_pdf(self, file_bytes: bytes) -> dict:
         """Lädt eine PDF, berechnet Embeddings und liefert Seiten-/Chunkanzahl.
@@ -35,17 +37,21 @@ class DocumentRetrievalPipeline:
         # Erst nach erfolgreicher Vorbereitung wird der Zustand ersetzt.
         embedded_chunks = embed_chunks(chunks)
         self._embedded_chunks = embedded_chunks
+        self._keyword_index = None
         self.metadata = {"page_count": document["page_count"], "chunk_count": len(embedded_chunks)}
         return dict(self.metadata)
 
-    def search(self, query: str, top_k: int = 3) -> list[dict]:
+    def search(self, query: str, top_k: int = 3, *, mode: str | None = None) -> list[dict]:
         """Kodiert nur die Frage und sucht in den gespeicherten Chunks."""
         if self._embedded_chunks is None:
             raise ValueError("Bitte laden Sie zuerst eine PDF-Datei mit load_pdf.")
         if not isinstance(query, str) or not query.strip():
             raise ValueError("Die Suchfrage muss ein nichtleerer Text sein.")
         # Die bestehende Suche prüft top_k und berechnet die Kosinus-Ähnlichkeit.
-        return search_embedded_chunks(query, self._embedded_chunks, top_k=top_k)
+        selected = retrieval_mode(mode)
+        if selected == "hybrid" and self._keyword_index is None:
+            self._keyword_index = BM25Index(self._embedded_chunks)
+        return search_prepared(query, self._embedded_chunks, top_k=top_k, mode=selected, keyword_index=self._keyword_index)
 
     def to_record(self) -> dict:
         """Gibt die bereits berechneten Daten für die lokale Speicherung zurück."""
@@ -74,6 +80,7 @@ class DocumentCollection:
     def __init__(self):
         self._documents = {}
         self._lock = RLock()
+        self._keyword_index = None
 
     def add_prepared(self, pipeline: DocumentRetrievalPipeline) -> dict:
         """Übernimmt ein erfolgreich vorbereitetes Dokument einschließlich Metadaten."""
@@ -89,6 +96,7 @@ class DocumentCollection:
         ]
         with self._lock:
             self._documents[pipeline.document_id] = (metadata, chunks)
+            self._keyword_index = None
         return dict(metadata)
 
     def list_documents(self) -> list[dict]:
@@ -99,10 +107,17 @@ class DocumentCollection:
     def remove_document(self, document_id: str) -> bool:
         """Entfernt ein Dokument anhand seiner ID, niemals anhand des Dateinamens."""
         with self._lock:
-            return self._documents.pop(document_id, None) is not None
+            removed = self._documents.pop(document_id, None) is not None
+            if removed:
+                self._keyword_index = None
+            return removed
 
-    def search(self, query: str, top_k: int = 3) -> list[dict]:
+    def search(self, query: str, top_k: int = 3, *, mode: str | None = None) -> list[dict]:
         """Sucht global mit genau einem neuen Frage-Embedding über alle Dokumente."""
+        selected = retrieval_mode(mode)
         with self._lock:
             chunks = [chunk for _, document_chunks in self._documents.values() for chunk in document_chunks]
-        return search_embedded_chunks(query, chunks, top_k=top_k)
+            if selected == "hybrid" and self._keyword_index is None:
+                self._keyword_index = BM25Index(chunks)
+            index = self._keyword_index
+        return search_prepared(query, chunks, top_k=top_k, mode=selected, keyword_index=index)

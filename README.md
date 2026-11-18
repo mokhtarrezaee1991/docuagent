@@ -125,6 +125,69 @@ Dateiname, Seite und Textbelege bestimmen die Relevanz; Beispielfragen ohne Antw
 zählen nicht. Alternative gültige Quellen sind zugelassen. Der kleine Datensatz
 misst ausschließlich Retrieval auf diesen Testdokumenten, keine LLM-Antwortqualität.
 
+### Hybrid Retrieval mit BM25 und RRF
+
+Die semantische Suche bleibt der Standard. Optional kombiniert `hybrid` sie mit
+`BM25Okapi` aus dem etablierten Paket [rank-bm25](https://github.com/dorianbrown/rank_bm25).
+BM25 bewertet gemeinsame Wörter anhand von Häufigkeit, Seltenheit und Chunklänge.
+Dokumente und Fragen werden identisch in Unicode-Wörter/Zahlen zerlegt und mit
+`casefold` normalisiert. Es gibt derzeit kein Stemming und keine Stoppwortliste.
+
+Reciprocal Rank Fusion kombiniert die Ranglisten mit
+`RRF = 1/(60 + Rang_semantic) + 1/(60 + Rang_bm25)`.
+Fehlende BM25-Treffer tragen 0 bei. Beide Verfahren sind gleich gewichtet.
+Die Konstante 60 folgt der [RRF-Originalarbeit](https://cormack.uwaterloo.ca/cormack/cormacksigir09-rrf.pdf).
+BM25 verwendet k1=1,5, b=0,75 und epsilon=0,25. Diese Parameter wurden vor der
+Evaluation festgelegt und nicht an die 20 Fragen angepasst.
+Beide Verfahren berücksichtigen alle vorhandenen Chunks; BM25 liefert nur Chunks
+mit einer Wortübereinstimmung. Bei Gleichstand bleibt die Reihenfolge stabil.
+
+Im PowerShell-Terminal des Backends vor dem Start auswählen, ohne `.env` zu ändern:
+
+```powershell
+$env:DOCUAGENT_RETRIEVAL_MODE = "hybrid"  # alternativ: "semantic" (Standard)
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Die API-Anfragen und Streamlit bleiben unverändert. Im Python-Service kann der
+Modus pro Suche explizit gewählt werden: `collection.search(query, mode="semantic")`
+oder `collection.search(query, mode="hybrid")`. Dokument-IDs und Chunk-Metadaten
+bleiben erhalten. `similarity_score` ist weiterhin die unveränderte
+Kosinus-Ähnlichkeit; Hybrid sortiert nach dem zusätzlichen `rrf_score` und liefert
+auch `bm25_score`, `semantic_rank` und `bm25_rank`. Die Scores haben unterschiedliche
+Skalen. SQLite speichert weiterhin die vorhandenen Dokumente und Embeddings.
+Der BM25-Index wird bei Bedarf aus diesen Chunks aufgebaut, wiederverwendet und bei
+Hinzufügen/Löschen eines Dokuments neu erstellt. Dokument-Embeddings werden dafür
+nicht erneut berechnet.
+
+Vergleich mit exakt demselben Datensatz und einmalig vorbereiteten Embeddings:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --mode compare
+# Einzeln weiterhin möglich:
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --mode semantic
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --mode hybrid
+```
+
+`compare` ist der Standard des Evaluationsskripts. Die tatsächlichen Ergebnisse:
+
+| Methode | Hit Rate@1 | Hit Rate@3 | MRR |
+| --- | ---: | ---: | ---: |
+| Semantic | 75 % | 95 % | 0,862500 |
+| Hybrid | 65 % | 80 % | 0,765833 |
+
+Bei 20 Fragen verbessern sich 1, verschlechtern sich 4 und bleiben 15 unverändert.
+Sicherheitsupdates steigen von Rang 2 auf 1; Urlaubstage fallen von 1 auf 2,
+Urlaubsantrag und Rechnungsfrist von 1 auf 5, Passwortlänge von 2 auf 6.
+Die Keyword-Suche erkennt Wortformen wie „Passwort/Passwörter“ nicht als identisch.
+Hybrid ist in diesem Test schlechter; deshalb bleibt `semantic` der Standard.
+Es wurden weder Rankings nachbearbeitet noch die Parameter nachträglich optimiert.
+Alle 20 Rangvergleiche stehen im [Vergleichsbericht](docs/hybrid_retrieval_comparison.md),
+die vollständigen Rohscores im [JSON-Bericht](docs/hybrid_retrieval_comparison.json).
+Es erfolgen keine LLM-Aufrufe und keine Änderungen an `.env` oder der Nutzerdatenbank.
+Validierung nach der Hybrid-Erweiterung: **201 Tests bestanden**; `pip check`
+meldet keine Abhängigkeitsprobleme.
+
 ### Lokale SQLite-Speicherung testen
 
 Die Datenbank wird beim FastAPI-Start automatisch unter

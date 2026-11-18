@@ -76,8 +76,9 @@ def test_evaluator_indexes_once_and_searches_full_ranking(monkeypatch):
     collection = Mock()
     counter = iter(range(2))
     collection.add_prepared.side_effect = lambda pipeline: {"document_id": str(next(counter)), "filename": pipeline.filename, "chunk_count": 10}
-    def search(query, top_k):
+    def search(query, top_k, *, mode=None):
         assert top_k == 20
+        assert mode in ("semantic", "hybrid")
         question = next(question for question in questions if question["query"] == query)
         ref = question["references"][0]
         return [{"document_id": "test", "filename": ref["filename"], "page_number": ref["page_number"], "chunk_id": 1,
@@ -92,3 +93,10 @@ def test_evaluator_indexes_once_and_searches_full_ranking(monkeypatch):
     assert collection.search.call_count == len(questions)
     assert report["metrics"]["hit_rate_at_1"] == 1
     assert all(row["similarity_score"] == 0.123 for row in report["questions"])
+    pipeline_class.reset_mock()
+    collection.search.reset_mock()
+    counter = iter(range(2))
+    comparison = evaluate(mode="compare")
+    assert pipeline_class.return_value.load_pdf.call_count == 2
+    assert collection.search.call_count == 2 * len(questions)
+    assert comparison["methods"]["semantic"]["dataset_sha256"] == comparison["methods"]["hybrid"]["dataset_sha256"]

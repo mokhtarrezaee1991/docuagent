@@ -8,3 +8,4 @@ python-multipart
 sentence-transformers
 openai
 streamlit
+rank-bm25
