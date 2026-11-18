@@ -2,8 +2,10 @@
 
 import os
 import re
+import unicodedata
 
 from rank_bm25 import BM25Okapi
+import snowballstemmer
 
 from app.services.semantic_search import search_embedded_chunks
 
@@ -16,26 +18,36 @@ BM25_PARAMETERS = {"k1": 1.5, "b": 0.75, "epsilon": 0.25}
 def retrieval_mode(mode: str | None = None) -> str:
     """Wählt den Modus explizit oder aus der Prozessumgebung, ohne .env-Zugriff."""
     selected = mode if mode is not None else os.environ.get("DOCUAGENT_RETRIEVAL_MODE", "semantic")
-    if selected not in ("semantic", "hybrid"):
-        raise ValueError("Der Retrieval-Modus muss semantic oder hybrid sein.")
+    if selected not in ("semantic", "hybrid", "hybrid_de"):
+        raise ValueError("Der Retrieval-Modus muss semantic, hybrid oder hybrid_de sein.")
     return selected
 
 
-def tokenize_keywords(text: str) -> list[str]:
+def tokenize_keywords(text: str, *, normalization: str = "none") -> list[str]:
     """Verwendet identische Unicode-Wortzerlegung für Dokumente und Fragen.
 
-    Keine Anpassung an Evaluationsfragen, keine Stoppwortliste und kein Stemming.
-    Zahlen bleiben erhalten; Groß-/Kleinschreibung wird vereinheitlicht.
+    none erhält das bisherige Verfahren unverändert. german verwendet zusätzlich
+    Unicode-NFC und den deutschen Snowball-Stemmer. Keine Stoppwortliste, keine
+    fragebezogenen Sonderregeln und keine Zerlegung zusammengesetzter Wörter.
+    Zahlen bleiben erhalten. Ein eigener Stemmer pro Aufruf vermeidet geteilten
+    veränderlichen Zustand bei parallelen Suchanfragen.
     """
-    return re.findall(r"\w+", text.casefold(), flags=re.UNICODE)
+    if normalization not in ("none", "german"):
+        raise ValueError("Die Wortnormalisierung muss none oder german sein.")
+    prepared = unicodedata.normalize("NFC", text) if normalization == "german" else text
+    tokens = re.findall(r"\w+", prepared.casefold(), flags=re.UNICODE)
+    return snowballstemmer.stemmer("german").stemWords(tokens) if normalization == "german" else tokens
 
 
 class BM25Index:
     """Hält einen wiederverwendbaren Keyword-Index für einen Chunk-Schnappschuss."""
 
-    def __init__(self, chunks: list[dict]):
+    def __init__(self, chunks: list[dict], *, normalization: str = "none"):
+        # Auch für einen leeren Index ungültige Konfigurationen sofort ablehnen.
+        tokenize_keywords("", normalization=normalization)
+        self.normalization = normalization
         self.chunks = tuple(chunks)
-        self.tokens = [tokenize_keywords(chunk["text"]) for chunk in self.chunks]
+        self.tokens = [tokenize_keywords(chunk["text"], normalization=normalization) for chunk in self.chunks]
         self.term_sets = [set(tokens) for tokens in self.tokens]
         self.model = BM25Okapi(self.tokens, **BM25_PARAMETERS) if any(self.tokens) else None
 
@@ -45,7 +57,7 @@ class BM25Index:
         Treffer mit gleichem Score behalten die ursprüngliche Chunk-Reihenfolge.
         Ein leerer oder unbekannter Suchbegriff erzeugt keine künstliche Rangliste.
         """
-        tokens = tokenize_keywords(query)
+        tokens = tokenize_keywords(query, normalization=self.normalization)
         if not tokens or self.model is None:
             return []
         scores = self.model.get_scores(tokens)
@@ -96,5 +108,9 @@ def search_prepared(query: str, chunks: list[dict], top_k: int = 3, *, mode: str
         return []
     # Beide Verfahren betrachten den gesamten lokalen Index vor der Top-k-Auswahl.
     semantic_hits = search_embedded_chunks(query, chunks, top_k=len(chunks))
-    keyword_hits = (keyword_index or BM25Index(chunks)).search(query)
+    normalization = "german" if selected == "hybrid_de" else "none"
+    index = keyword_index or BM25Index(chunks, normalization=normalization)
+    if index.normalization != normalization:
+        raise ValueError("BM25-Index und Suchmodus verwenden unterschiedliche Normalisierung.")
+    keyword_hits = index.search(query)
     return reciprocal_rank_fusion(semantic_hits, keyword_hits)[:top_k]

@@ -49,8 +49,9 @@ class DocumentRetrievalPipeline:
             raise ValueError("Die Suchfrage muss ein nichtleerer Text sein.")
         # Die bestehende Suche prüft top_k und berechnet die Kosinus-Ähnlichkeit.
         selected = retrieval_mode(mode)
-        if selected == "hybrid" and self._keyword_index is None:
-            self._keyword_index = BM25Index(self._embedded_chunks)
+        normalization = "german" if selected == "hybrid_de" else "none"
+        if selected != "semantic" and (self._keyword_index is None or self._keyword_index.normalization != normalization):
+            self._keyword_index = BM25Index(self._embedded_chunks, normalization=normalization)
         return search_prepared(query, self._embedded_chunks, top_k=top_k, mode=selected, keyword_index=self._keyword_index)
 
     def to_record(self) -> dict:
@@ -117,7 +118,8 @@ class DocumentCollection:
         selected = retrieval_mode(mode)
         with self._lock:
             chunks = [chunk for _, document_chunks in self._documents.values() for chunk in document_chunks]
-            if selected == "hybrid" and self._keyword_index is None:
-                self._keyword_index = BM25Index(chunks)
+            normalization = "german" if selected == "hybrid_de" else "none"
+            if selected != "semantic" and (self._keyword_index is None or self._keyword_index.normalization != normalization):
+                self._keyword_index = BM25Index(chunks, normalization=normalization)
             index = self._keyword_index
         return search_prepared(query, chunks, top_k=top_k, mode=selected, keyword_index=index)

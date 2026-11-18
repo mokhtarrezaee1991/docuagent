@@ -188,6 +188,72 @@ Es erfolgen keine LLM-Aufrufe und keine Änderungen an `.env` oder der Nutzerdat
 Validierung nach der Hybrid-Erweiterung: **201 Tests bestanden**; `pip check`
 meldet keine Abhängigkeitsprobleme.
 
+### Deutsche BM25-Wortnormalisierung
+
+Der zusätzliche Modus `hybrid_de` verwendet den deutschen
+[Snowball-Stemmer](https://snowballstem.org/algorithms/german/stemmer.html)
+aus `snowballstemmer` (lokal installiert: Version 3.1.1). Dokument-Chunks und
+Suchfragen werden identisch mit Unicode-NFC, `casefold`, Wortzerlegung und
+Snowball-Stemming normalisiert. Texte, Embeddings und Quellen bleiben unverändert.
+Der bisherige Modus `hybrid` bleibt ohne Stemming verfügbar. `semantic` bleibt Standard.
+
+```powershell
+# Im Backend-Terminal optional auswählen; keine Änderung an .env:
+$env:DOCUAGENT_RETRIEVAL_MODE = "hybrid_de"
+# Vergleich aller drei Varianten aus backend:
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --mode compare
+```
+
+Der neue Vergleich verwendet exakt dieselben 20 Fragen, Referenzen und 18 Chunks.
+Dokument-Embeddings werden für alle drei Varianten nur einmal berechnet. RRF bleibt
+gleichgewichtet mit Konstante 60; auch k1=1,5, b=0,75 und epsilon=0,25 bleiben
+unverändert. Keine Stoppwörter, Synonymregeln oder testspezifischen Wörterbücher wurden ergänzt.
+
+| Methode | Hit Rate@1 | Hit Rate@3 | MRR |
+| --- | ---: | ---: | ---: |
+| Semantic | 75 % | 95 % | 0,862500 |
+| Hybrid bisher | 65 % | 80 % | 0,765833 |
+| Hybrid mit Snowball DE | 60 % | 95 % | 0,776667 |
+
+Die vier bisherigen Verschlechterungen lassen sich anhand der tatsächlichen
+BM25-Ränge erklären:
+
+- **Urlaubstage:** Der relevante Chunk hat nur die Worttreffer `urlaubstage` und
+  `pro`, BM25-Rang 3. Beispielfragen rangieren höher. Stemming macht daraus
+  `urlaubstag` und `pro`, verbessert den Rang aber nicht: Hybrid bleibt Rang 2.
+- **Urlaubsantrag:** Bisher keine gemeinsamen Wörter im relevanten Chunk. Snowball
+  gleicht unter anderem `Urlaubsantrag/Urlaubsanträge` und `muss/müssen` an.
+  Der Chunk erhält BM25-Rang 3 und steigt in der Fusion von 5 auf 2.
+  `einreichen/eingereicht` bleiben jedoch verschiedene Stämme.
+- **Lieferantenrechnungen:** Bisher trifft im relevanten Chunk nur `werden` zu,
+  BM25-Rang 13. Nach Stemming treffen `muss` und `werd` zu, BM25-Rang 12.
+  `Lieferantenrechnungen/Rechnungen` werden nicht als identischer Begriff erkannt:
+  Snowball zerlegt keine zusammengesetzten Wörter. Die Fusion bleibt Rang 5.
+- **Passwortlänge:** Bisher kein Worttreffer. `Passwort/Passwörter` und
+  `muss/müssen` werden angeglichen. BM25-Rang 3; Fusion verbessert sich von 6 auf 2.
+
+Zusätzlich verbessert sich die Meldefrist für verlorene Firmenlaptops von Rang 4
+auf 3. Bei der Einkaufsfreigabe entsteht dagegen eine neue Verschlechterung von
+Rang 1 auf 2: Der relevante Chunk fällt in BM25 von Rang 2 auf 3. Die neuen Stämme
+verändern auch Dokumenthäufigkeiten, IDF-Werte und Treffer konkurrierender Chunks;
+ein Beispielfragen-Chunk erhält den ersten Platz. Stemming ist daher keine Garantie
+für eine bessere Rangfolge.
+
+Gegenüber bisherigem Hybrid: **3 Fragen besser, 1 schlechter, 16 unverändert**.
+Gegenüber Semantic: **2 besser, 4 schlechter, 14 unverändert**. Alle Fragen mit
+Rängen, Verbesserungen/Verschlechterungen und Token-Diagnosen stehen im
+[neuen Vergleichsbericht](docs/german_hybrid_retrieval_comparison.md) und in den
+[vollständigen JSON-Rohdaten](docs/german_hybrid_retrieval_comparison.json).
+Die bisherigen Zweier-Vergleichsberichte bleiben als historische Baseline erhalten.
+`--mode compare` erzeugt jetzt standardmäßig den neuen Dreier-Vergleich;
+`--mode semantic`, `--mode hybrid` und `--mode hybrid_de` sind einzeln nutzbar.
+
+Der kleine Datensatz zeigt weiterhin keinen Vorteil gegenüber Semantic Search.
+Jede Verbesserung muss mit unabhängigen Fragen bestätigt werden, bevor eine
+Standardumstellung gerechtfertigt ist. Es gab keine nachträgliche Optimierung
+der RRF-Gewichte, keine LLM-Aufrufe und keine Änderungen an `.env` oder SQLite.
+Validierung: **212 Tests bestanden**, `pip check` ohne Abhängigkeitsprobleme.
+
 ### Lokale SQLite-Speicherung testen
 
 Die Datenbank wird beim FastAPI-Start automatisch unter

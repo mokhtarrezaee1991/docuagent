@@ -78,7 +78,7 @@ def test_evaluator_indexes_once_and_searches_full_ranking(monkeypatch):
     collection.add_prepared.side_effect = lambda pipeline: {"document_id": str(next(counter)), "filename": pipeline.filename, "chunk_count": 10}
     def search(query, top_k, *, mode=None):
         assert top_k == 20
-        assert mode in ("semantic", "hybrid")
+        assert mode in ("semantic", "hybrid", "hybrid_de")
         question = next(question for question in questions if question["query"] == query)
         ref = question["references"][0]
         return [{"document_id": "test", "filename": ref["filename"], "page_number": ref["page_number"], "chunk_id": 1,
@@ -98,5 +98,5 @@ def test_evaluator_indexes_once_and_searches_full_ranking(monkeypatch):
     counter = iter(range(2))
     comparison = evaluate(mode="compare")
     assert pipeline_class.return_value.load_pdf.call_count == 2
-    assert collection.search.call_count == 2 * len(questions)
+    assert collection.search.call_count == 3 * len(questions)
     assert comparison["methods"]["semantic"]["dataset_sha256"] == comparison["methods"]["hybrid"]["dataset_sha256"]

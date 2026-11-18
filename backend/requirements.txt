@@ -9,3 +9,4 @@ sentence-transformers
 openai
 streamlit
 rank-bm25
+snowballstemmer
