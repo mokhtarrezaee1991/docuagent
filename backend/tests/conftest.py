@@ -3,6 +3,12 @@
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def isolated_database(tmp_path, monkeypatch):
+    """Jeder Test erhält eine eigene Datenbank und berührt keine Nutzerdokumente."""
+    monkeypatch.setenv("DOCUAGENT_DB_PATH", str(tmp_path / "docuagent.sqlite3"))
+
+
 class CharacterTokenizer:
     """Zählt pro Zeichen ein Token und fügt zwei spezielle Tokens hinzu."""
 

@@ -1,24 +1,63 @@
 import os
 from pathlib import Path
 from threading import RLock
+from contextlib import asynccontextmanager
+import sqlite3
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field, StrictStr, field_validator
 from starlette.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 
 from app.services.pdf_reader import extract_pdf_text
 from app.services.retrieval_pipeline import DocumentRetrievalPipeline, DocumentCollection
 from app.services.rag_service import generate_answer
+from app.services.document_store import SQLiteDocumentStore
 
 
 MAX_PDF_SIZE = 10 * 1024 * 1024
 
+
+def database_path() -> Path:
+    """Verwendet einen stabilen lokalen Pfad; Tests können ihn isoliert ersetzen."""
+    configured = os.environ.get("DOCUAGENT_DB_PATH")
+    project_root = Path(__file__).resolve().parents[2]
+    path = Path(configured) if configured else Path("data/storage/docuagent.sqlite3")
+    return path if path.is_absolute() else project_root / path
+
+
+@asynccontextmanager
+async def lifespan(application):
+    """Lädt den persistenten Index beim Start ohne Neuberechnung der Embeddings."""
+    store = SQLiteDocumentStore(database_path())
+    records, single = store.load_documents()
+    restored = None
+    if single and len(records) == 1:
+        restored = DocumentRetrievalPipeline.from_record(records[0])
+    elif records:
+        restored = DocumentCollection()
+        for record in records:
+            restored.add_prepared(DocumentRetrievalPipeline.from_record(record))
+    application.state.document_store = store
+    application.state.retrieval_pipeline = restored
+    try:
+        yield
+    finally:
+        application.state.document_store = None
+
+
 # Erstellt die FastAPI-Anwendung mit dem Projekttitel.
-app = FastAPI(title="DocuAgent API")
-# Dokumente pro Prozess; ein Neustart leert diesen Speicher.
+app = FastAPI(title="DocuAgent API", lifespan=lifespan)
+# Der Suchindex wird beim Start aus SQLite wiederhergestellt.
 app.state.retrieval_pipeline = None
 documents_lock = RLock()
+
+
+@app.exception_handler(sqlite3.Error)
+async def storage_error_handler(request, error):
+    """Gibt keine SQL-Anweisungen, Dokumenttexte oder internen Pfade aus."""
+    return JSONResponse(status_code=503, content={"detail": "Die lokale Dokumentdatenbank ist derzeit nicht verfügbar. Bitte Speicherplatz und Zugriffsrechte prüfen."})
 
 
 class SearchRequest(BaseModel):
@@ -89,6 +128,7 @@ async def index_document(file: UploadFile = File(...)):
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     with documents_lock:
+        app.state.document_store.save_document(candidate.to_record(), replace_all=True)
         app.state.retrieval_pipeline = candidate
     return metadata
 
@@ -104,6 +144,7 @@ async def add_document(file: UploadFile = File(...)):
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     with documents_lock:
+        app.state.document_store.save_document(candidate.to_record())
         current = app.state.retrieval_pipeline
         if not isinstance(current, DocumentCollection):
             collection = DocumentCollection()
@@ -130,6 +171,9 @@ def remove_document(document_id: str):
     """Entfernt ein Dokument und dessen Embeddings aus dem Prozessspeicher."""
     with documents_lock:
         current = app.state.retrieval_pipeline
+        if not any(document["document_id"] == document_id for document in list_documents()):
+            raise HTTPException(status_code=404, detail="Das Dokument wurde nicht gefunden.")
+        app.state.document_store.delete_document(document_id)
         if isinstance(current, DocumentCollection):
             removed = current.remove_document(document_id)
         else:

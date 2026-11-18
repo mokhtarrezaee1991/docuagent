@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
+from tempfile import TemporaryDirectory
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -60,9 +61,10 @@ def diagnose(paths: list[Path], query: str = QUERY) -> dict:
     previous = getattr(api.app.state, "retrieval_pipeline", None)
     api.app.state.retrieval_pipeline = None
     try:
-        with patch.object(rag_service, "OpenAI", constructor), patch.object(api, "load_dotenv"), \
+        with TemporaryDirectory(prefix="docuagent-diagnose-") as directory, \
+                patch.object(rag_service, "OpenAI", constructor), patch.object(api, "load_dotenv"), \
                 patch.object(api, "generate_answer", side_effect=capture_generate), \
-                patch.dict(os.environ, {"OPENAI_API_KEY": "diagnostic-placeholder"}):
+                patch.dict(os.environ, {"OPENAI_API_KEY": "diagnostic-placeholder", "DOCUAGENT_DB_PATH": str(Path(directory) / "diagnose.sqlite3")}):
             with TestClient(api.app) as http:
                 for path, content in zip(paths, contents):
                     response = http.post("/documents", files={"file": (path.name, content, "application/pdf")})

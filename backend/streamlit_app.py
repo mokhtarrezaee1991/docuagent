@@ -49,12 +49,12 @@ def request_backend(method: str, path: str, timeout: httpx.Timeout, **kwargs):
         messages = {
             400: "Die PDF ist beschädigt, ungültig oder enthält keinen lesbaren Text.",
             404: "Das Dokument ist nicht mehr vorhanden. Bitte die Dokumentliste aktualisieren.",
-            409: "Kein Dokument indexiert. Bitte die PDF erneut indexieren, etwa nach einem Backend-Neustart.",
+            409: "Kein Dokument indexiert. Bitte die Dokumentliste aktualisieren oder eine PDF hinzufügen.",
             413: "Die Datei überschreitet das 10-MB-Limit.",
             415: "Das Backend akzeptiert ausschließlich PDF-Dateien.",
             422: "Die Anfrage ist ungültig. Bitte Frage und Trefferanzahl prüfen.",
             502: "Die KI-Antwort konnte nicht erstellt werden. Bitte API-Zugang und Verbindung im Backend prüfen.",
-            503: "Die Antwortgenerierung ist nicht konfiguriert. Bitte OPENAI_API_KEY ausschließlich im Backend setzen.",
+            503: "Das Backend ist derzeit nicht bereit. Bitte lokale Datenbank und API-Konfiguration im Backend prüfen.",
         }
         raise BackendError(messages.get(response.status_code, "Das Backend meldet einen Fehler. Bitte die lokale Serverkonfiguration prüfen."), response.status_code)
     try:
@@ -141,7 +141,7 @@ def main() -> None:
     st.set_page_config(page_title="DocuAgent", page_icon="📄", layout="wide")
     st.title("DocuAgent")
     st.write("Durchsuchen Sie mehrere PDFs gemeinsam und erhalten Sie Antworten mit Dokumentquellen.")
-    st.caption("Lokaler Einzelbenutzer-Prototyp · Mehrere Dokumente · Keine dauerhafte Speicherung")
+    st.caption("Lokaler Einzelbenutzer-Prototyp · Mehrere Dokumente · Lokale SQLite-Speicherung")
     st.session_state.setdefault("messages", [])
     if "documents" not in st.session_state:
         st.session_state.documents = []
@@ -193,7 +193,7 @@ def main() -> None:
                     except BackendError as error:
                         st.error(str(error))
         st.divider()
-        st.caption("Alle Dokumente liegen im FastAPI-Arbeitsspeicher und gehen bei einem Neustart verloren. Andere Sitzungen teilen denselben Index.")
+        st.caption("Dokumenttexte und Embeddings bleiben lokal in SQLite gespeichert und werden beim Backend-Start geladen. Andere Sitzungen teilen denselben Index.")
 
     st.subheader("Fragen an Ihre Dokumente")
     st.caption("Das Absenden einer Frage nutzt die kostenpflichtige OpenAI API. Quellenreferenzen garantieren keine inhaltliche Richtigkeit.")

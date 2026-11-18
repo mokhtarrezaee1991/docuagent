@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Lokale Dokumentdatenbank einschließlich SQLite-Journaldateien
+/data/storage/

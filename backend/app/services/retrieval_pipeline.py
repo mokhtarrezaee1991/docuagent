@@ -47,6 +47,26 @@ class DocumentRetrievalPipeline:
         # Die bestehende Suche prüft top_k und berechnet die Kosinus-Ähnlichkeit.
         return search_embedded_chunks(query, self._embedded_chunks, top_k=top_k)
 
+    def to_record(self) -> dict:
+        """Gibt die bereits berechneten Daten für die lokale Speicherung zurück."""
+        if self.metadata is None:
+            raise ValueError("Das Dokument ist noch nicht vorbereitet.")
+        return {
+            "metadata": {"document_id": self.document_id, "filename": self.filename, **self.metadata},
+            "chunks": self._embedded_chunks,
+        }
+
+    @classmethod
+    def from_record(cls, record: dict):
+        """Stellt ein vorbereitetes Dokument ohne Extraktion oder Modellaufruf wieder her."""
+        pipeline = cls()
+        metadata = record["metadata"]
+        pipeline.document_id = metadata["document_id"]
+        pipeline.filename = metadata["filename"]
+        pipeline.metadata = {key: metadata[key] for key in ("page_count", "chunk_count")}
+        pipeline._embedded_chunks = record["chunks"]
+        return pipeline
+
 
 class DocumentCollection:
     """Verwaltet vorbereitete Dokumente ohne Datenbank oder erneute Kodierung."""
