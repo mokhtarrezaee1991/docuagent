@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "source_report_sha256": "93d946af50cc02fc930fb7f159da54b065ed5814f04d824bbbda107a7df19b2b",
+  "rubric_sha256": "c3f5964a287a34f7fe37ad7ccd942ae3892696d1dc12a5a132b4f25ab045fcb6",
+  "reviewer": "",
+  "reviews": [
+    {
+      "question_id": "A01",
+      "assessments": {
+        "answer_correctness": {
+          "status": "unreviewed",
+          "score": null,
+          "reason": ""
+        },
+        "faithfulness": {
+          "status": "unreviewed",
+          "score": null,
+          "reason": ""
+        },
+        "citation_accuracy": {
+          "status": "unreviewed",
+          "score": null,
+          "reason": ""
+        },
+        "abstention": {
+          "status": "not_applicable",
+          "score": null,
+          "reason": "Gemäß Rubrik für diese Frage nicht anwendbar."
+        }
+      }
+    },
+    {
+      "question_id": "A11",
+      "assessments": {
+        "answer_correctness": {
+          "status": "unreviewed",
+          "score": null,
+          "reason": ""
+        },
+        "faithfulness": {
+          "status": "unreviewed",
+          "score": null,
+          "reason": ""
+        },
+        "citation_accuracy": {
+          "status": "unreviewed",
+          "score": null,
+          "reason": ""
+        },
+        "abstention": {
+          "status": "not_applicable",
+          "score": null,
+          "reason": "Gemäß Rubrik für diese Frage nicht anwendbar."
+        }
+      }
+    },
+    {
+      "question_id": "A21",
+      "assessments": {
+        "answer_correctness": {
+          "status": "not_applicable",
+          "score": null,
+          "reason": "Gemäß Rubrik für diese Frage nicht anwendbar."
+        },
+        "faithfulness": {
+          "status": "unreviewed",
+          "score": null,
+          "reason": ""
+        },
+        "citation_accuracy": {
+          "status": "unreviewed",
+          "score": null,
+          "reason": ""
+        },
+        "abstention": {
+          "status": "unreviewed",
+          "score": null,
+          "reason": ""
+        }
+      }
+    }
+  ]
+}

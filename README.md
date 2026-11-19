@@ -340,6 +340,79 @@ unabhängigen Fragen bestätigt werden.
 Validierung nach dieser Erweiterung: **231 Tests bestanden**. Alle Live-Pfade
 wurden dabei ausschließlich mit gemockter OpenAI API geprüft.
 
+### Manuelle Review-Auswertung ohne API-Aufrufe
+
+`backend/scripts/review_answers.py` wertet ausschließlich lokale JSON-Dateien aus.
+Es importiert weder RAG-Services noch OpenAI, lädt kein Modell und greift nicht auf
+SQLite oder `.env` zu. Der ursprüngliche Antwortbericht bleibt unverändert.
+Eine manuelle Bewertung steht in einer **separaten JSON-Datei** und wird mittels
+SHA-256 an den exakten Quellbericht und die vorhandene
+[0–2-Review-Rubrik](data/evaluation/answer_review_rubric.json) gebunden.
+Nach einer Änderung des Quellberichts oder der Rubrik muss eine neue Review-Datei
+erstellt werden; alte Bewertungen werden nicht stillschweigend neu zugeordnet.
+
+Bereits vorbereitet: [manual_answer_reviews.json](docs/manual_answer_reviews.json)
+für die drei vorhandenen generierten Antworten und eine
+[unbewertete Zusammenfassung](docs/manual_answer_review_summary.md).
+Es wurden **keine Noten automatisch vergeben**. Für einen anderen Bericht kann
+aus `backend` eine neue Vorlage erzeugt werden:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/review_answers.py init --report ../docs/answer_evaluation_live.json --reviews ../docs/meine_answer_reviews.json --reviewer "Mein Name"
+```
+
+In der neuen Datei `reviewer` angeben und pro Frage/Kriterium bearbeiten:
+
+```json
+"faithfulness": {
+  "status": "scored",
+  "score": 2,
+  "reason": "Alle Aussagen werden durch die angegebenen Kontextstellen gestützt."
+}
+```
+
+Diese Note ist nur ein Formatbeispiel, keine tatsächliche Bewertung einer Antwort.
+Die Statuswerte bedeuten:
+
+- `scored`: ganze Zahl **0, 1 oder 2** und eine konkrete Begründung erforderlich.
+- `unreviewed`: noch nicht bewertet; `score` bleibt `null`.
+- `not_applicable`: nicht anwendbar; `score` bleibt `null`, Begründung erforderlich.
+
+Gemäß Rubrik ist Answer Correctness bei unbeantwortbaren Fragen nicht anwendbar,
+Abstention bei beantwortbaren Fragen. Die Vorlage kennzeichnet diese Fälle bereits.
+Citation Accuracy kann bei einer Verweigerung ohne Tatsachenbehauptungen als nicht
+anwendbar markiert werden; das muss der Reviewer anhand der tatsächlichen Antwort
+prüfen. Frage, Sollantwort, Quellen und Kontext sind im Quellbericht nachzulesen.
+Dry-Run-Fälle ohne generierte Antwort sind nicht bewertbar und werden nicht in die
+Vorlage übernommen. Unbekannte oder doppelte IDs, ungültige Noten und Kriteriennamen
+werden abgelehnt. Ausgelassene Fragen/Kriterien gelten als unbewertet.
+
+Auswertung in einen **neuen** Markdown-Bericht schreiben:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/review_answers.py summarize --report ../docs/answer_evaluation_live.json --reviews ../docs/meine_answer_reviews.json --output ../docs/meine_answer_reviews_v1.md
+```
+
+Nach weiteren Bewertungen für `--output` einen neuen Namen wie `_v2.md` wählen.
+Vorhandene Dateien werden grundsätzlich abgelehnt und niemals überschrieben.
+Dies gilt auch, wenn versehentlich der Quellbericht oder die Review-Datei als
+Ausgabepfad angegeben wird.
+
+Der Bericht zeigt pro Kriterium Durchschnitt auf der Skala 0–2, Anzahl tatsächlich
+bewerteter Fälle, unbewertete Fälle und nicht anwendbare Fälle. Einzelnoten und
+Begründungen bleiben sichtbar. Nur `scored` fließt in den Mittelwert ein:
+Noten 2 und 0 ergeben **1,0 bei zwei Bewertungen**, unabhängig davon, wie viele
+andere Fälle unbewertet oder nicht anwendbar sind. Ohne Bewertungen bleibt der
+Mittelwert `null` bzw. „nicht bewertet“. Es wird kein irreführender Gesamtwert
+über alle Kriterien gebildet. Bewertungsabdeckung und subjektive Urteile müssen
+bei der Interpretation berücksichtigt werden.
+
+Die lokale Vorlage/Auswertung wurde ohne erneute Antwortgenerierung ausgeführt.
+Es gab keine Live-Evaluation, keine LLM-Bewertung und keine Änderung vorhandener
+JSON-Berichte. Die neuen Tests prüfen insbesondere Nenner, echte Nullnoten,
+ungültige Noten, Quellenbericht-Zuordnung und Überschreibschutz.
+Validierung: **252 Tests bestanden**; `pip check` meldet keine Probleme.
+
 ### Lokale SQLite-Speicherung testen
 
 Die Datenbank wird beim FastAPI-Start automatisch unter
