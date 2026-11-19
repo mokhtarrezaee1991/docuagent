@@ -2,25 +2,25 @@
   "version": 1,
   "source_report_sha256": "93d946af50cc02fc930fb7f159da54b065ed5814f04d824bbbda107a7df19b2b",
   "rubric_sha256": "c3f5964a287a34f7fe37ad7ccd942ae3892696d1dc12a5a132b4f25ab045fcb6",
-  "reviewer": "",
+  "reviewer": "Manuelle Prüfung mit ChatGPT (GPT-6)",
   "reviews": [
     {
       "question_id": "A01",
       "assessments": {
         "answer_correctness": {
-          "status": "unreviewed",
-          "score": null,
-          "reason": ""
+          "status": "scored",
+          "score": 2,
+          "reason": "30 bezahlte Urlaubstage bei einer Fünf-Tage-Woche und anteilige Berechnung bei Teilzeit stimmen mit der Sollantwort überein."
         },
         "faithfulness": {
-          "status": "unreviewed",
-          "score": null,
-          "reason": ""
+          "status": "scored",
+          "score": 2,
+          "reason": "Beide Aussagen sind im tatsächlich übergebenen Text von Chunk 2 auf Seite 1 enthalten."
         },
         "citation_accuracy": {
-          "status": "unreviewed",
-          "score": null,
-          "reason": ""
+          "status": "scored",
+          "score": 2,
+          "reason": "Die angegebene Quelle DocuAgent_Testdokument.pdf, Seite 1, Chunk 2 belegt die Antwort."
         },
         "abstention": {
           "status": "not_applicable",
@@ -33,19 +33,19 @@
       "question_id": "A11",
       "assessments": {
         "answer_correctness": {
-          "status": "unreviewed",
-          "score": null,
-          "reason": ""
+          "status": "scored",
+          "score": 2,
+          "reason": "Die Antwort nennt die korrekte Mindestlänge von 14 Zeichen."
         },
         "faithfulness": {
-          "status": "unreviewed",
-          "score": null,
-          "reason": ""
+          "status": "scored",
+          "score": 2,
+          "reason": "Die Passwortregel ist im tatsächlich übergebenen Chunk 2 der IT-Sicherheitsrichtlinie enthalten."
         },
         "citation_accuracy": {
-          "status": "unreviewed",
-          "score": null,
-          "reason": ""
+          "status": "scored",
+          "score": 2,
+          "reason": "Die angegebene Quelle DocuAgent_IT_Sicherheitsrichtlinie.pdf, Seite 1, Chunk 2 belegt die Antwort."
         },
         "abstention": {
           "status": "not_applicable",
@@ -63,19 +63,19 @@
           "reason": "Gemäß Rubrik für diese Frage nicht anwendbar."
         },
         "faithfulness": {
-          "status": "unreviewed",
-          "score": null,
-          "reason": ""
+          "status": "scored",
+          "score": 2,
+          "reason": "Die Antwort nennt keinen unbelegten Gehaltswert und erklärt nur, dass die Information im vorliegenden Dokument nicht gefunden wurde."
         },
         "citation_accuracy": {
-          "status": "unreviewed",
+          "status": "not_applicable",
           "score": null,
-          "reason": ""
+          "reason": "Korrekte Verweigerung ohne Tatsachenbehauptung und ohne Quellen; gemäß Rubrik nicht anwendbar."
         },
         "abstention": {
-          "status": "unreviewed",
-          "score": null,
-          "reason": ""
+          "status": "scored",
+          "score": 2,
+          "reason": "Die beiden Test-PDFs enthalten laut Referenz keine Gehaltsangaben; das Modell verzichtet korrekt auf eine erfundene Zahl."
         }
       }
     }
