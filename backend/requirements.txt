@@ -10,3 +10,4 @@ openai
 streamlit
 rank-bm25
 snowballstemmer
+langgraph>=1.2.22,<1.3

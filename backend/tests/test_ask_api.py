@@ -12,7 +12,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import main
-from app.services import rag_service, semantic_search
+from app.services import rag_service, semantic_search, retrieval_pipeline
 
 
 @pytest.fixture
@@ -113,3 +113,89 @@ def test_api_failure_is_sanitized(api):
     assert response.status_code == 502
     assert "Interne vertrauliche Diagnose" not in response.text
     assert "placeholder" not in response.text
+    client.responses.parse.assert_called_once()
+
+
+@pytest.mark.parametrize("has_key,expected_status", [(True, 200), (False, 503)])
+def test_workflow_empty_context_preserves_key_requirement(api, monkeypatch, has_key, expected_status):
+    """Lokaler Verzicht umgeht die bisherige API-Schlüsselprüfung nicht."""
+    http, remote, constructor, dotenv, _ = api
+    index_document(http)
+    pipeline = main.app.state.retrieval_pipeline
+    search = Mock(return_value=[])
+    monkeypatch.setattr(pipeline, "search", search)
+    generator = Mock(side_effect=AssertionError("Kein Generator bei leerem Kontext"))
+    monkeypatch.setattr(main, "generate_answer", generator)
+    if not has_key:
+        monkeypatch.delenv("OPENAI_API_KEY")
+
+    response = http.post("/documents/ask", json={"query": "Unbekannte Information", "top_k": 2})
+
+    assert response.status_code == expected_status
+    if has_key:
+        assert response.json() == {"answer": "Die Information wurde im Dokument nicht gefunden.", "sources": []}
+    else:
+        assert "nicht konfiguriert" in response.json()["detail"]
+    search.assert_called_once_with("Unbekannte Information", top_k=2)
+    dotenv.assert_called_once()
+    generator.assert_not_called()
+    constructor.assert_not_called()
+    remote.responses.parse.assert_not_called()
+
+
+def test_workflow_generate_once_and_preserve_llm_abstention(api):
+    """Vorhandener Kontext erzwingt keine Antwort, wenn das LLM verzichtet."""
+    http, remote, constructor, _, _ = api
+    index_document(http)
+    remote.responses.parse.return_value = SimpleNamespace(
+        status="completed",
+        output_parsed=rag_service.RagAnswer(
+            answer="Die Information wurde im Dokument nicht gefunden.", sources=[],
+        ),
+    )
+    response = http.post("/documents/ask", json={"query": "Wie hoch ist der Umsatz?"})
+    assert response.status_code == 200
+    assert response.json() == {"answer": "Die Information wurde im Dokument nicht gefunden.", "sources": []}
+    constructor.assert_called_once_with(api_key="placeholder", timeout=30.0, max_retries=0)
+    remote.responses.parse.assert_called_once()
+    assert remote.responses.parse.call_args.kwargs["store"] is False
+
+
+def test_no_document_precedes_missing_key(api, monkeypatch):
+    """Auch mit fehlendem Schlüssel hat ein fehlender Index weiterhin Vorrang."""
+    http, _, constructor, dotenv, _ = api
+    monkeypatch.delenv("OPENAI_API_KEY")
+    assert http.post("/documents/ask", json={"query": "Frage"}).status_code == 409
+    dotenv.assert_not_called()
+    constructor.assert_not_called()
+
+
+def test_endpoint_invokes_existing_workflow(api, monkeypatch):
+    """Der Endpunkt gibt nur das Ergebnis aus, keine internen State-Felder."""
+    http, _, constructor, _, _ = api
+    result = {"answer": "Testantwort", "sources": []}
+    invoke = Mock(return_value={"result": result, "abstention_reason": None, "retrieved_chunks": []})
+    monkeypatch.setattr(main.document_qa_workflow, "invoke", invoke)
+    response = http.post("/documents/ask", json={"query": "Frage"})
+    assert response.status_code == 200
+    assert response.json() == result
+    invoke.assert_called_once_with({"query": "Frage", "top_k": 3})
+    constructor.assert_not_called()
+
+
+@pytest.mark.parametrize("mode", [None, "hybrid", "hybrid_de"])
+def test_workflow_preserves_retrieval_mode(api, monkeypatch, mode):
+    """Semantic bleibt Standard, explizite alternative Modi funktionieren weiter."""
+    http, remote, _, _, _ = api
+    index_document(http)
+    if mode is None:
+        monkeypatch.delenv("DOCUAGENT_RETRIEVAL_MODE", raising=False)
+    else:
+        monkeypatch.setenv("DOCUAGENT_RETRIEVAL_MODE", mode)
+    search = Mock(wraps=retrieval_pipeline.search_prepared)
+    monkeypatch.setattr(retrieval_pipeline, "search_prepared", search)
+    response = http.post("/documents/ask", json={"query": "Urlaubstage"})
+    assert response.status_code == 200
+    search.assert_called_once()
+    assert search.call_args.kwargs["mode"] == (mode or "semantic")
+    remote.responses.parse.assert_called_once()

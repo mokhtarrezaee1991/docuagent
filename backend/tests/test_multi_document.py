@@ -165,3 +165,46 @@ def test_legacy_index_can_be_extended_and_still_replaces(api):
     assert len(client.get("/documents").json()) == 2
     client.post("/documents/index", files={"file": ("neu.pdf", pdf("Urlaub"), "application/pdf")})
     assert [document["filename"] for document in client.get("/documents").json()] == ["neu.pdf"]
+
+
+def test_ask_workflow_sees_additions_deletions_and_replacement(api):
+    """Ein einmal kompilierter Graph verwendet stets den aktuellen Dokumentindex."""
+    client, model, remote = api
+    first = add(client, "Urlaub")
+
+    def ask(expected_ids, query="Urlaub"):
+        remote.responses.parse.reset_mock()
+        response = client.post("/documents/ask", json={"query": query, "top_k": 3})
+        assert response.status_code == 200
+        remote.responses.parse.assert_called_once()
+        context = json.loads(remote.responses.parse.call_args.kwargs["input"])["context"]
+        assert {chunk["document_id"] for chunk in context} == expected_ids
+        assert response.json()["sources"][0]["document_id"] in expected_ids
+
+    ask({first["document_id"]})
+    second = add(client, "Rechnung")
+    ask({first["document_id"], second["document_id"]})
+    assert client.delete(f"/documents/{first['document_id']}").status_code == 200
+    ask({second["document_id"]}, "Rechnung")
+
+    # Der Legacy-Endpunkt ersetzt sogar das bisherige Collection-Objekt.
+    replacement = client.post("/documents/index", files={"file": ("neu.pdf", pdf("Urlaub"), "application/pdf")})
+    assert replacement.status_code == 200
+    current = client.get("/documents").json()[0]
+    remote.responses.parse.side_effect = None
+    remote.responses.parse.return_value = SimpleNamespace(
+        status="completed", output_parsed=rag_service.RagAnswer(
+            answer="Testantwort", sources=[rag_service.Source(chunk_id=1, page_number=1)],
+        ),
+    )
+    response = client.post("/documents/ask", json={"query": "Urlaub"})
+    assert response.status_code == 200
+    assert response.json()["sources"] == [{"chunk_id": 1, "page_number": 1}]
+    context = json.loads(remote.responses.parse.call_args.kwargs["input"])["context"]
+    assert context == [{"chunk_id": 1, "page_number": 1, "text": "Urlaub\n"}]
+    assert client.delete(f"/documents/{current['document_id']}").status_code == 200
+    before = remote.responses.parse.call_count
+    assert client.post("/documents/ask", json={"query": "Urlaub"}).status_code == 409
+    assert remote.responses.parse.call_count == before
+    # Drei Indexierungen und vier Fragen: kein Dokument wurde erneut eingebettet.
+    assert model.encode.call_count == 7

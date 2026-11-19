@@ -14,6 +14,7 @@ from app.services.pdf_reader import extract_pdf_text
 from app.services.retrieval_pipeline import DocumentRetrievalPipeline, DocumentCollection
 from app.services.rag_service import generate_answer
 from app.services.document_store import SQLiteDocumentStore
+from app.workflows.document_qa import build_document_qa_workflow
 
 
 MAX_PDF_SIZE = 10 * 1024 * 1024
@@ -194,18 +195,34 @@ def search_document(request: SearchRequest):
     return pipeline.search(request.query, top_k=request.top_k)
 
 
-@app.post("/documents/ask")
-def ask_document(request: SearchRequest):
-    """Beantwortet eine Frage mit dem aktiven Dokument als RAG-Kontext."""
-    # Nutzt dieselbe Prüfung und Suche wie der bestehende Suchendpunkt.
-    chunks = search_document(request)
+def retrieve_for_ask(query: str, *, top_k: int) -> list[dict]:
+    """Löst den aktuellen Index auf und erhält die bisherige Schlüsselprüfung."""
+    chunks = search_document(SearchRequest(query=query, top_k=top_k))
     # Der feste Pfad funktioniert unabhängig vom Arbeitsverzeichnis.
     # Bereits gesetzte Umgebungsvariablen behalten Vorrang.
     load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env", override=False)
     if not os.environ.get("OPENAI_API_KEY", "").strip():
         raise HTTPException(status_code=503, detail="OPENAI_API_KEY ist für die Antwortgenerierung nicht konfiguriert.")
+    # Auch ohne Treffer bleibt ein fehlender Schlüssel wie bisher HTTP 503.
+    # Schlüssel und Konfiguration gelangen niemals in den Workflow-State.
+    return chunks
+
+
+def generate_for_ask(query: str, chunks: list[dict]) -> dict:
+    """Übersetzt ausschließlich Fehler der Antwortgenerierung wie bisher."""
     try:
-        return generate_answer(request.query, chunks)
+        return generate_answer(query, chunks)
     except RuntimeError:
         # Keine internen Fehlerdetails oder vertraulichen Daten weitergeben.
         raise HTTPException(status_code=502, detail="Die KI-Antwort konnte nicht erstellt werden. Bitte API-Zugang und Verbindung prüfen.") from None
+
+
+# Ein Graph, aber eigener State je Aufruf; der Retriever liest den Index erst dann.
+document_qa_workflow = build_document_qa_workflow(retrieve_for_ask, generate_for_ask)
+
+
+@app.post("/documents/ask")
+def ask_document(request: SearchRequest):
+    """Beantwortet Dokumentfragen über den bestehenden LangGraph-Workflow."""
+    state = document_qa_workflow.invoke({"query": request.query, "top_k": request.top_k})
+    return state["result"]
