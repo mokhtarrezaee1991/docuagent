@@ -113,13 +113,41 @@ class DocumentCollection:
                 self._keyword_index = None
             return removed
 
-    def search(self, query: str, top_k: int = 3, *, mode: str | None = None) -> list[dict]:
-        """Sucht global mit genau einem neuen Frage-Embedding über alle Dokumente."""
+    def search(
+        self, query: str, top_k: int = 3, *, mode: str | None = None,
+        document_ids: list[str] | None = None,
+    ) -> list[dict]:
+        """Sucht mit vorbereiteten Embeddings optional in ausgewählten Dokumenten.
+
+        None durchsucht wie bisher alle Dokumente, [] keines. Doppelte IDs
+        zählen einmal; die Indexreihenfolge bleibt erhalten. Unbekannte oder
+        gelöschte IDs sowie ungültige Filtertypen führen zu ValueError.
+        Auswahl und Prüfung verwenden denselben gesperrten Index-Schnappschuss.
+        """
         selected = retrieval_mode(mode)
         with self._lock:
-            chunks = [chunk for _, document_chunks in self._documents.values() for chunk in document_chunks]
+            scope = None
+            if document_ids is not None:
+                if not isinstance(document_ids, list) or any(
+                    not isinstance(identifier, str) or not identifier.strip()
+                    for identifier in document_ids
+                ):
+                    raise ValueError("document_ids muss eine Liste nichtleerer Dokument-IDs sein.")
+                scope = set(document_ids)
+                if scope.difference(self._documents):
+                    raise ValueError("Mindestens eine Dokument-ID ist unbekannt oder wurde gelöscht.")
+            chunks = [
+                chunk for identifier, (_, document_chunks) in self._documents.items()
+                if scope is None or identifier in scope
+                for chunk in document_chunks
+            ]
             normalization = "german" if selected == "hybrid_de" else "none"
-            if selected != "semantic" and (self._keyword_index is None or self._keyword_index.normalization != normalization):
-                self._keyword_index = BM25Index(chunks, normalization=normalization)
-            index = self._keyword_index
+            if scope is None:
+                # Der globale Cache bleibt ausschließlich für ungefilterte Suchen.
+                if selected != "semantic" and (self._keyword_index is None or self._keyword_index.normalization != normalization):
+                    self._keyword_index = BM25Index(chunks, normalization=normalization)
+                index = self._keyword_index
+            else:
+                # Lokaler Index verhindert fremde Treffer und globale BM25-Statistiken.
+                index = BM25Index(chunks, normalization=normalization) if selected != "semantic" else None
         return search_prepared(query, chunks, top_k=top_k, mode=selected, keyword_index=index)
