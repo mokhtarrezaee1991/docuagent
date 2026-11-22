@@ -189,6 +189,122 @@ die bestehende Retrieval-Evaluation über die vollständige Rangliste. PDFs,
 Extraktion, SQLite, FastAPI und der vollständige Graph werden nicht End-to-End
 evaluiert.
 
+### Isolierte Retrieval-Modus-Policy: Phase 5b
+
+`backend/app/workflows/retrieval_mode_policy.py` stellt die deterministische
+Schnittstelle `choose_mode(query, *, fallback_mode, enabled=False)` bereit.
+Das validierte, unveränderliche Ergebnis enthält `mode`, `routing_reason`
+und `used_fallback`. Erlaubt sind nur `semantic`, `hybrid` und `hybrid_de`.
+
+| Einstellung | Verhalten | `routing_reason` |
+| --- | --- | --- |
+| `enabled=False` (Standard) | Konfigurierten Fallback unverändert beibehalten | `automation_disabled` |
+| `enabled=True`, keine validierte Regel vorhanden | Ebenfalls Fallback beibehalten | `no_validated_rule` |
+
+**Die Policy trifft noch keine automatische Modusentscheidung und ist nicht in
+den produktiven LangGraph-Workflow oder FastAPI eingebunden.** Es gibt keine
+Keyword-Heuristik und keinen LLM-Router. `fallback_mode` bezeichnet Konfiguration;
+eine explizite Modusvorgabe müsste ein späterer Aufrufer vor der optionalen
+Automatik behandeln. Die bestehende Search Policy, Dokumentauswahl und
+serverseitige Moduskonfiguration bleiben unverändert.
+
+### Retrieval-Modus-Evaluation: feste Vektoren und lokales Modell
+
+`backend/scripts/evaluate_retrieval_modes.py` vergleicht die drei festen Modi
+und die Policy über die tatsächliche `DocumentCollection.search()`-Schnittstelle.
+Der neue Datensatz [retrieval_mode_cases.json](data/evaluation/retrieval_mode_cases.json)
+enthält sechs synthetische Dokumente mit zwölf Chunks und zwölf Fragen:
+je **drei Dokumente und sechs Fragen für Entwicklung und Test**. Dokument-IDs
+und Fragefamilien sind zwischen den Splits getrennt. Die bisherigen 20
+Retrieval-Fragen werden nicht als unabhängiger Testsatz wiederverwendet.
+Alle Varianten eines Laufs erhalten identische Chunks, Dokument-Embeddings,
+Dokumentauswahl, Relevanzreferenzen und `top_k=3`. Referenzen verlangen passende
+Dokument-ID, Chunk, Seite und Textbeleg. Gleich gute Modi werden als Gleichstand
+ausgewiesen; nachträglich beste Modi sind nur Diagnostik, keine Router-Eingabe.
+
+**Phase 5b: feste synthetische Vektoren.** Der Standardmodus `fixtures` verwendet
+manuell vorgegebene Dokument- und Fragevektoren. Er prüft reproduzierbar
+Fallback-Verhalten, Metriken und Filterung, nicht die Qualität eines echten Modells.
+Der [Fixture-Bericht](docs/retrieval_modes_offline_20261122_184747_406665.json) ergibt:
+
+| Split | Fester Modus | Hit Rate@1 | Hit Rate@3 | MRR@3 |
+| --- | --- | ---: | ---: | ---: |
+| Entwicklung | semantic | 50 % | 100 % | 0,7500 |
+| Entwicklung | hybrid | 100 % | 100 % | 1,0000 |
+| Entwicklung | hybrid_de | 100 % | 100 % | 1,0000 |
+| Test | semantic | 50 % | 100 % | 0,7500 |
+| Test | hybrid | 66,67 % | 100 % | 0,8333 |
+| Test | hybrid_de | 66,67 % | 100 % | 0,8333 |
+
+Deaktivierte und aktivierte Policy ohne Regel liefern für jeden Fallback exakt
+dessen Treffer und Kennzahlen. Fallback-Häufigkeit und Vertragskorrektheit sind
+jeweils 100 %; das bedeutet nicht, dass der beste Modus intelligent erkannt wird.
+Treffer außerhalb des erlaubten Dokumentbereichs: 0.
+
+**Phase 5c: echte lokale Embeddings.** `--embeddings local` verwendet das bestehende
+CPU-Modell `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` aus dem
+lokalen Cache mit maximal 128 Tokens. Die festen Fixture-Vektoren werden nicht
+für das Ranking verwendet. Dokument-Embeddings werden einmal berechnet und
+für alle Verfahren wiederverwendet. Der [lokale Bericht](docs/retrieval_modes_local_20261122_185223_618848.json)
+zeigt für **semantic, hybrid und hybrid_de jeweils in Entwicklung und Test**:
+**Hit Rate@1 = 100 %, Hit Rate@3 = 100 %, MRR@3 = 1,0** bei sechs Fragen je Split.
+Die deaktivierte Policy liefert exakt dieselben Treffer wie ihr jeweiliger fester
+Fallback. Bereichsfremde Treffer: 0. Beide Evaluationsarten benötigen
+**0 LLM- und 0 OpenAI-Aufrufe**.
+
+Im lokalen Modelllauf erfolgen ein Warm-up und fünf Messläufe je Frage/Methode
+mit rotierender Methodenreihenfolge. Die Suchzeit enthält das Frage-Embedding
+und Retrieval einschließlich gegebenenfalls erforderlichem BM25-Indexaufbau,
+aber keine Dokument-Einbettung. Je Tabellenzeile liegen 30 Suchmessungen vor:
+
+| Split | Modus | Median | P95 |
+| --- | --- | ---: | ---: |
+| Entwicklung | semantic | 23,46 ms | 28,00 ms |
+| Entwicklung | hybrid | 23,24 ms | 29,34 ms |
+| Entwicklung | hybrid_de | 25,64 ms | 33,18 ms |
+| Test | semantic | 24,38 ms | 33,70 ms |
+| Test | hybrid | 24,25 ms | 36,76 ms |
+| Test | hybrid_de | 26,62 ms | 36,55 ms |
+
+Separat aufgezeichnet: Modellladen rund 16,36 s; Dokument-Einbettung rund
+427 ms für Entwicklung und 83 ms für Test. Das Laden misst einen einzelnen
+Aufruf des gecachten Loaders, keinen garantierten Kaltstart. Laufzeiten sind
+lokale Orientierung ohne Lasttest; kleine Unterschiede begründen keine Rangfolge
+der Verfahren. Die Fixture-Laufzeiten sind Einzelmessungen ohne Warm-up und
+nicht mit diesen wiederholten Modellmessungen gleichzusetzen.
+
+Beide Evaluationen aus `backend` erneut ausführen:
+
+```powershell
+# Deterministische Fixtures, kein Modell erforderlich:
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval_modes.py --embeddings fixtures
+# Tatsächliches lokales Modell, fünf Wiederholungen nach Warm-up:
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval_modes.py --embeddings local --repeats 5
+```
+
+Jeder Lauf erstellt einen neuen Zeitstempel-Bericht unter `docs/`; vorhandene
+Dateien werden nicht überschrieben. Optional ist `--output` mit neuem Pfad
+möglich. Der lokale Modus erzwingt Offline-Betrieb und benötigt bereits gecachte
+Modellgewichte; er lädt weder ein fehlendes Modell herunter noch `.env`.
+
+**Kein Qualitätsgewinn durch automatische Moduswahl nachgewiesen.** Eine
+deaktivierte Policy kann ihren festen Fallback nicht verbessern; auch
+`enabled=True` ändert ohne validierte Regel nichts. Die kleinen, bekannten
+synthetischen Datensätze erlauben keine allgemeine Aussage über reale Dokumente.
+Der perfekte lokale Modelllauf unterscheidet die Modi nicht ausreichend.
+Fixtures messen keine echte Embedding-Qualität, und beide Verfahren messen keine
+LLM-Antwortqualität. Deshalb wird keine automatische Aktivierung empfohlen.
+
+**Möglicher nächster Schritt – nur geplant:** zunächst eine isolierte Evaluation
+von Retrieval-Qualitätsprüfung und gezielter erneuter Suche. Dafür wären
+unabhängige Fälle mit fehlenden, unpassenden und ausreichenden Treffern sowie ein
+Vergleich gegen den bisherigen einzelnen Suchlauf nötig. Bewertet werden sollten
+Verbesserungen, Verschlechterungen, zusätzliche Laufzeit und Aufrufgrenzen.
+Ein fester Abbruch und höchstens eine zusätzliche Suche wären als experimentelle
+Grenzen vorab festzulegen. Diese Qualitätsprüfung und erneute Suche sind noch
+nicht implementiert oder produktiv angebunden; ein autonomer Agent ist damit
+weiterhin nicht vorhanden.
+
 ## Development Roadmap
 
 - [x] FastAPI backend setup
@@ -204,6 +320,8 @@ evaluiert.
 - [x] Persistent document and embedding storage with SQLite
 - [ ] Advanced retrieval and answer-quality evaluation
 - [x] LangGraph document workflow, rule-based search policy and offline routing evaluation (Phase 3a–3e)
+- [x] Isolated, disabled retrieval-mode policy and fixture/local-embedding evaluation (Phase 5b–5c)
+- [ ] Isolated evaluation of retrieval-quality checks and targeted repeat search (planned)
 - [ ] Autonomous LLM router, only after independently demonstrated benefit
 - [ ] Improved document analysis and information extraction
 - [ ] Deployment and CI/CD

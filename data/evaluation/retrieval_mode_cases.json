@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "description": "Neue synthetische Dokumente und unabhängige Fragefamilien je Split. Vektoren sind manuelle Test-Fixtures, keine Modell-Embeddings. Keine Regeln werden aus dem Testsplit abgeleitet.",
+  "documents": [
+    {"document_id":"dev-sternwarte","split":"development","filename":"sternwarte.pdf","chunks":[
+      {"chunk_id":1,"page_number":1,"text":"Die Sternwarte öffnet ihre Kuppel jeden Donnerstag.","embedding":[0.8,0.6,0]},
+      {"chunk_id":2,"page_number":2,"text":"Für das Teleskop werden blaue Filter verwendet.","embedding":[1,0,0]}]},
+    {"document_id":"dev-museum","split":"development","filename":"museum.pdf","chunks":[
+      {"chunk_id":1,"page_number":1,"text":"Das Museum verleiht Audioguides für drei Euro.","embedding":[0,1,0]},
+      {"chunk_id":2,"page_number":2,"text":"Die Sonderausstellung zeigt historische Glaskugeln.","embedding":[0,0.8,0.6]}]},
+    {"document_id":"dev-faehre","split":"development","filename":"faehre.pdf","chunks":[
+      {"chunk_id":1,"page_number":1,"text":"Die Fähre transportiert höchstens acht Fahrräder.","embedding":[0,0,1]},
+      {"chunk_id":2,"page_number":2,"text":"Der Anleger liegt am Westufer.","embedding":[0.6,0,0.8]}]},
+    {"document_id":"test-keramik","split":"test","filename":"keramik.pdf","chunks":[
+      {"chunk_id":1,"page_number":1,"text":"Der Keramikofen brennt Ton bei 950 Grad.","embedding":[0.8,0.6,0]},
+      {"chunk_id":2,"page_number":2,"text":"Glasuren werden in grünen Behältern aufbewahrt.","embedding":[1,0,0]}]},
+    {"document_id":"test-saatgut","split":"test","filename":"saatgut.pdf","chunks":[
+      {"chunk_id":1,"page_number":1,"text":"Die Saatgutstation lagert Samen bei vier Grad.","embedding":[0,1,0]},
+      {"chunk_id":2,"page_number":2,"text":"Die Keimprobe erfolgt im September.","embedding":[0,0.8,0.6]}]},
+    {"document_id":"test-moorpfad","split":"test","filename":"moorpfad.pdf","chunks":[
+      {"chunk_id":1,"page_number":1,"text":"Der Moorpfad ist sechs Kilometer lang.","embedding":[0,0,1]},
+      {"chunk_id":2,"page_number":2,"text":"Am Aussichtsturm beginnt der Rundweg.","embedding":[0.6,0,0.8]}]}
+  ],
+  "questions": [
+    {"id":"D01","split":"development","family":"sternwarte","query":"Wann öffnet die Sternwarte ihre Kuppel?","vector":[1,0,0],"document_ids":null,"references":[{"document_id":"dev-sternwarte","chunk_id":1,"page_number":1,"evidence":"jeden Donnerstag"}]},
+    {"id":"D02","split":"development","family":"sternwarte","query":"Welche Filter verwendet das Teleskop?","vector":[1,0,0],"document_ids":["dev-sternwarte"],"references":[{"document_id":"dev-sternwarte","chunk_id":2,"page_number":2,"evidence":"blaue Filter"}]},
+    {"id":"D03","split":"development","family":"museum","query":"Was kostet ein Audioguide im Museum?","vector":[0,1,0],"document_ids":null,"references":[{"document_id":"dev-museum","chunk_id":1,"page_number":1,"evidence":"drei Euro"}]},
+    {"id":"D04","split":"development","family":"museum","query":"Was zeigt die Sonderausstellung?","vector":[0,1,0],"document_ids":["dev-museum"],"references":[{"document_id":"dev-museum","chunk_id":2,"page_number":2,"evidence":"historische Glaskugeln"}]},
+    {"id":"D05","split":"development","family":"faehre","query":"Wie viele Fahrräder passen auf die Fähre?","vector":[0,0,1],"document_ids":null,"references":[{"document_id":"dev-faehre","chunk_id":1,"page_number":1,"evidence":"acht Fahrräder"}]},
+    {"id":"D06","split":"development","family":"faehre","query":"Wo liegt der Anleger?","vector":[0,0,1],"document_ids":["dev-faehre"],"references":[{"document_id":"dev-faehre","chunk_id":2,"page_number":2,"evidence":"Westufer"}]},
+    {"id":"T01","split":"test","family":"keramik","query":"Bei welcher Temperatur brennt der Keramikofen Ton?","vector":[1,0,0],"document_ids":null,"references":[{"document_id":"test-keramik","chunk_id":1,"page_number":1,"evidence":"950 Grad"}]},
+    {"id":"T02","split":"test","family":"keramik","query":"Wo werden Glasuren aufbewahrt?","vector":[1,0,0],"document_ids":["test-keramik"],"references":[{"document_id":"test-keramik","chunk_id":2,"page_number":2,"evidence":"grünen Behältern"}]},
+    {"id":"T03","split":"test","family":"saatgut","query":"Wie kalt werden Samen in der Saatgutstation gelagert?","vector":[0,1,0],"document_ids":null,"references":[{"document_id":"test-saatgut","chunk_id":1,"page_number":1,"evidence":"vier Grad"}]},
+    {"id":"T04","split":"test","family":"saatgut","query":"In welchem Monat erfolgt die Keimprobe?","vector":[0,1,0],"document_ids":["test-saatgut"],"references":[{"document_id":"test-saatgut","chunk_id":2,"page_number":2,"evidence":"September"}]},
+    {"id":"T05","split":"test","family":"moorpfad","query":"Wie lang ist der Moorpfad?","vector":[0,0,1],"document_ids":null,"references":[{"document_id":"test-moorpfad","chunk_id":1,"page_number":1,"evidence":"sechs Kilometer"}]},
+    {"id":"T06","split":"test","family":"moorpfad","query":"Wo beginnt der Rundweg?","vector":[0,0,1],"document_ids":["test-moorpfad"],"references":[{"document_id":"test-moorpfad","chunk_id":2,"page_number":2,"evidence":"Aussichtsturm"}]}
+  ]
+}
