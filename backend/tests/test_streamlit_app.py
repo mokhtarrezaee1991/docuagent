@@ -111,9 +111,12 @@ def test_ui_remove_document_and_reset_chat(monkeypatch):
     from streamlit.testing.v1 import AppTest
     document = {"document_id": "test-id", "filename": "gleich.pdf", "page_count": 1, "chunk_count": 1}
     requests = []
+    available = [document]
     def handler(request):
         requests.append(request.method)
-        return httpx.Response(200, json=[document] if request.method == "GET" else {"deleted": True})
+        if request.method == "DELETE":
+            available.clear()
+        return httpx.Response(200, json=available if request.method == "GET" else {"deleted": True})
     mock_backend(monkeypatch, handler)
     app = AppTest.from_file(ui.__file__).run()
     assert not app.exception
@@ -123,7 +126,7 @@ def test_ui_remove_document_and_reset_chat(monkeypatch):
     assert not app.exception
     assert app.chat_input[0].disabled
     assert app.session_state["messages"] == []
-    assert requests == ["GET", "DELETE"]
+    assert requests == ["GET", "DELETE", "GET"]
 
 
 def test_ui_chat_shows_document_sources(monkeypatch):
@@ -151,3 +154,114 @@ def test_ui_chat_shows_document_sources(monkeypatch):
     assert any("Dokument-ID: zwei" in caption.value for caption in app.caption)
     app.run()
     assert requests == [("GET", "/documents"), ("POST", "/documents/ask")]
+
+
+@pytest.mark.parametrize("ids", [None, [], ["a"], ["a", "b"]])
+def test_ask_payload_preserves_scope(monkeypatch, ids):
+    import json
+    def handler(request):
+        payload = json.loads(request.content)
+        assert payload == {"query": "Frage", "top_k": 3, **({"document_ids": ids} if ids is not None else {})}
+        return httpx.Response(200, json={"answer": "Test", "sources": []})
+    mock_backend(monkeypatch, handler)
+    ui.ask_question("Frage", document_ids=ids)
+
+
+def selection_documents():
+    """Auch kollidierende kurze ID-Präfixe müssen eindeutig angezeigt werden."""
+    return [{"document_id": identifier, "filename": "gleich.pdf", "page_count": 1, "chunk_count": 1}
+            for identifier in ("gleicher-prefix-a", "gleicher-prefix-b")]
+
+
+def test_selection_helpers_do_not_broaden_scope():
+    documents = selection_documents()
+    first, second = [document["document_id"] for document in documents]
+    assert ui.document_label(documents[0]) != ui.document_label(documents[1])
+    assert ui.reconcile_selection(documents[:1], [first, second]) == ([first], [second])
+    assert ui.reconcile_selection([], [first]) == ([], [first])
+
+
+@pytest.mark.parametrize("selection", [None, [], ["gleicher-prefix-a"], ["gleicher-prefix-a", "gleicher-prefix-b"]])
+def test_ui_document_selection_and_reruns(monkeypatch, selection):
+    import json
+    from streamlit.testing.v1 import AppTest
+    requests = []
+    def handler(request):
+        requests.append((request.method, json.loads(request.content) if request.method == "POST" else None))
+        return httpx.Response(200, json=selection_documents() if request.method == "GET" else {"answer": "Test", "sources": []})
+    mock_backend(monkeypatch, handler)
+    app = AppTest.from_file(ui.__file__).run()
+    assert app.radio[0].value == "Alle Dokumente"
+    assert len(set(app.multiselect[0].options)) == 2
+    assert all("gleich.pdf" in label for label in app.multiselect[0].options)
+    if selection is not None:
+        app.radio[0].set_value("Einzelne Dokumente").run()
+        app.multiselect[0].set_value(selection).run()
+        if not selection:
+            assert any("Keine Dokumente ausgewählt" in item.value for item in app.info)
+    assert requests == [("GET", None)]
+    app.chat_input[0].set_value("Frage").run()
+    assert not app.exception
+    expected = {"query": "Frage", "top_k": 3}
+    if selection is not None:
+        expected["document_ids"] = selection
+    assert requests[-1] == ("POST", expected)
+    app.run()
+    assert len(requests) == 2
+
+
+def test_ui_deleted_selection_stays_explicitly_empty(monkeypatch):
+    import json
+    from streamlit.testing.v1 import AppTest
+    available = selection_documents()
+    payloads = []
+    def handler(request):
+        if request.method == "DELETE":
+            available[:] = [document for document in available if document["document_id"] != request.url.path.split("/")[-1]]
+            return httpx.Response(200, json={"deleted": True})
+        if request.method == "GET":
+            return httpx.Response(200, json=available)
+        payloads.append(json.loads(request.content))
+        return httpx.Response(200, json={"answer": "Nicht gefunden", "sources": []})
+    mock_backend(monkeypatch, handler)
+    app = AppTest.from_file(ui.__file__).run()
+    app.radio[0].set_value("Einzelne Dokumente").run()
+    app.multiselect[0].set_value(["gleicher-prefix-a"]).run()
+    app.button(key="remove_gleicher-prefix-a").click().run()
+    assert not app.exception
+    assert app.multiselect[0].value == []
+    assert app.radio[0].value == "Einzelne Dokumente"
+    assert any("aus Ihrer Auswahl entfernt" in warning.value for warning in app.warning)
+    app.chat_input[0].set_value("Frage").run()
+    assert payloads == [{"query": "Frage", "top_k": 3, "document_ids": []}]
+
+
+def test_manual_refresh_removes_externally_deleted_id(monkeypatch):
+    from streamlit.testing.v1 import AppTest
+    available = selection_documents()
+    mock_backend(monkeypatch, lambda request: httpx.Response(200, json=available))
+    app = AppTest.from_file(ui.__file__).run()
+    app.radio[0].set_value("Einzelne Dokumente").run()
+    app.multiselect[0].set_value([item["document_id"] for item in available]).run()
+    available.pop()
+    next(button for button in app.button if button.label == "Dokumentliste aktualisieren").click().run()
+    assert not app.exception
+    assert app.multiselect[0].value == ["gleicher-prefix-a"]
+    assert app.warning
+
+
+def test_invalid_selection_blocks_followup_until_refresh(monkeypatch):
+    from streamlit.testing.v1 import AppTest
+    calls = []
+    def handler(request):
+        calls.append(request.method)
+        return httpx.Response(200, json=selection_documents()) if request.method == "GET" else httpx.Response(422, json={"detail": "Privat"})
+    mock_backend(monkeypatch, handler)
+    app = AppTest.from_file(ui.__file__).run()
+    app.chat_input[0].set_value("Frage").run()
+    assert any("Dokumentliste aktualisieren" in error.value for error in app.error)
+    app.run()
+    assert app.chat_input[0].disabled
+    assert calls == ["GET", "POST"]
+    next(button for button in app.button if button.label == "Dokumentliste aktualisieren").click().run()
+    assert not app.chat_input[0].disabled

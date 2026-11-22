@@ -77,6 +77,20 @@ class SearchRequest(BaseModel):
         return value
 
 
+class AskRequest(SearchRequest):
+    """Erweitert nur Dokumentfragen um eine optionale explizite ID-Auswahl."""
+
+    document_ids: list[StrictStr] | None = Field(default=None, strict=True)
+
+    @field_validator("document_ids")
+    @classmethod
+    def validate_document_ids(cls, value):
+        """Leere Auswahl bleibt leer; leere einzelne IDs werden abgewiesen."""
+        if value is not None and any(not identifier.strip() for identifier in value):
+            raise ValueError("Dokument-IDs dürfen nicht leer sein.")
+        return value
+
+
 # Prüft, ob der Dienst erreichbar ist.
 @app.get("/health")
 def health():
@@ -207,7 +221,7 @@ def retrieve_for_ask(
         chunks = pipeline.search(query, top_k=top_k, mode=mode, document_ids=document_ids)
     else:
         # Der Legacy-Index liefert weiterhin Quellen ohne zusätzliche Dokumentfelder.
-        # Öffentliche Anfragen haben keinen Filter; intern keinen Filter ignorieren.
+        # Auch im Legacy-Modus eine explizite Auswahl niemals ignorieren.
         if document_ids is not None and any(identifier != pipeline.document_id for identifier in document_ids):
             raise ValueError("Mindestens eine Dokument-ID ist unbekannt oder wurde gelöscht.")
         chunks = [] if document_ids == [] else pipeline.search(query, top_k=top_k, mode=mode)
@@ -230,18 +244,32 @@ def generate_for_ask(query: str, chunks: list[dict]) -> dict:
         raise HTTPException(status_code=502, detail="Die KI-Antwort konnte nicht erstellt werden. Bitte API-Zugang und Verbindung prüfen.") from None
 
 
+def documents_for_ask() -> list[dict]:
+    """Erhält HTTP 409 bei leerem Index vor der Prüfung ausgewählter IDs."""
+    documents = list_documents()
+    if not documents:
+        raise HTTPException(status_code=409, detail="Bitte indexieren Sie zuerst eine PDF-Datei.")
+    return documents
+
+
 # Ein Graph, aber eigener State je Aufruf; der Retriever liest den Index erst dann.
 document_qa_workflow = build_document_qa_workflow(
-    retrieve_for_ask, generate_for_ask, get_documents=list_documents,
+    retrieve_for_ask, generate_for_ask, get_documents=documents_for_ask,
 )
 
 
 @app.post("/documents/ask")
-def ask_document(request: SearchRequest):
+def ask_document(request: AskRequest):
     """Beantwortet Dokumentfragen über den bestehenden LangGraph-Workflow."""
     # Die serverseitige Konfiguration hat Vorrang vor dem Policy-Standard.
-    # mode und document_ids werden nicht als öffentliche Request-Felder ergänzt.
-    state = document_qa_workflow.invoke({
-        "query": request.query, "top_k": request.top_k, "mode": retrieval_mode(),
-    })
+    # Nur document_ids ist zusätzlich öffentlich, der Modus bleibt serverseitig.
+    state_input = {"query": request.query, "top_k": request.top_k, "mode": retrieval_mode()}
+    if request.document_ids is not None:
+        # Insbesondere [] nicht in None oder eine globale Suche umwandeln.
+        state_input["document_ids"] = request.document_ids
+    try:
+        state = document_qa_workflow.invoke(state_input)
+    except ValueError:
+        # Keine internen Metadaten, Pfade oder Exception-Details veröffentlichen.
+        raise HTTPException(status_code=422, detail="Die Dokumentauswahl ist ungültig. Bitte aktuelle Dokument-IDs verwenden.") from None
     return state["result"]

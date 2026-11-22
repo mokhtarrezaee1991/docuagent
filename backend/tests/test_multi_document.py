@@ -239,3 +239,94 @@ def test_ask_policy_uses_collection_metadata_and_configured_mode(api, monkeypatc
     search.assert_called_once_with("Urlaub", top_k=2, mode=expected, document_ids=None)
     remote.responses.parse.assert_called_once()
     assert {chunk["document_id"] for chunk in json.loads(remote.responses.parse.call_args.kwargs["input"])["context"]} == {first["document_id"], second["document_id"]}
+
+
+@pytest.mark.parametrize("mode", ["semantic", "hybrid", "hybrid_de"])
+@pytest.mark.parametrize("selection", ["single", "multiple", "duplicate", "missing", "null"])
+def test_public_document_selection_filters_before_ranking(api, monkeypatch, mode, selection):
+    """Gleiche Namen werden nach ID unterschieden; Top-k folgt der Auswahl."""
+    client, model, remote = api
+    first = add(client, "Urlaub")
+    second = add(client, "Rechnung")
+    monkeypatch.setenv("DOCUAGENT_RETRIEVAL_MODE", mode)
+    model.encode.reset_mock()
+    body = {"query": "Urlaub", "top_k": 1 if selection in ("single", "duplicate") else 3}
+    if selection in ("single", "duplicate"):
+        body["document_ids"] = [second["document_id"]] * (2 if selection == "duplicate" else 1)
+        expected = {second["document_id"]}
+    else:
+        expected = {first["document_id"], second["document_id"]}
+        if selection == "multiple":
+            body["document_ids"] = [second["document_id"], first["document_id"]]
+        elif selection == "null":
+            body["document_ids"] = None
+    response = client.post("/documents/ask", json=body)
+    assert response.status_code == 200
+    assert set(response.json()) == {"answer", "sources"}
+    context = json.loads(remote.responses.parse.call_args.kwargs["input"])["context"]
+    assert {chunk["document_id"] for chunk in context} == expected
+    assert len(context) == len(expected)
+    assert all(source["document_id"] in expected for source in response.json()["sources"])
+    assert all(source["filename"] == "gleich.pdf" for source in response.json()["sources"])
+    remote.responses.parse.assert_called_once()
+    model.encode.assert_called_once_with(["Urlaub"], convert_to_numpy=True)
+
+
+@pytest.mark.parametrize("mixed", [False, True])
+def test_unknown_selection_returns_sanitized_422_without_search(api, monkeypatch, mixed):
+    client, model, remote = api
+    current = add(client, "Urlaub")
+    model.encode.reset_mock()
+    # Eine ungültige Auswahl wird auch bei fehlendem Schlüssel zuerst abgelehnt.
+    monkeypatch.delenv("OPENAI_API_KEY")
+    secret_detail = "unbekannt-interne-diagnose"
+    ids = [current["document_id"], secret_detail] if mixed else [secret_detail]
+    response = client.post("/documents/ask", json={"query": "Urlaub", "document_ids": ids})
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Die Dokumentauswahl ist ungültig. Bitte aktuelle Dokument-IDs verwenden."}
+    assert secret_detail not in response.text
+    remote.responses.parse.assert_not_called()
+    model.encode.assert_not_called()
+
+
+def test_deleted_id_is_422_while_remaining_index_stays_usable(api):
+    client, _, remote = api
+    first = add(client, "Urlaub")
+    second = add(client, "Rechnung")
+    assert client.delete(f"/documents/{first['document_id']}").status_code == 200
+    response = client.post("/documents/ask", json={"query": "Urlaub", "document_ids": [first["document_id"]]})
+    assert response.status_code == 422
+    remote.responses.parse.assert_not_called()
+    assert client.post("/documents/ask", json={"query": "Rechnung", "document_ids": [second["document_id"]]}).status_code == 200
+
+
+def test_selected_document_does_not_allow_citing_other_document(api):
+    client, _, remote = api
+    excluded = add(client, "Urlaub")
+    selected = add(client, "Rechnung")
+    remote.responses.parse.side_effect = None
+    remote.responses.parse.return_value = SimpleNamespace(
+        status="completed", output_parsed=rag_service.MultiDocumentAnswer(
+            answer="Nicht belegt", sources=[rag_service.DocumentSource(
+                document_id=excluded["document_id"], chunk_id=1, page_number=1,
+            )],
+        ),
+    )
+    response = client.post("/documents/ask", json={"query": "Urlaub", "document_ids": [selected["document_id"]]})
+    assert response.status_code == 502
+    context = json.loads(remote.responses.parse.call_args.kwargs["input"])["context"]
+    assert {chunk["document_id"] for chunk in context} == {selected["document_id"]}
+    remote.responses.parse.assert_called_once()
+
+
+def test_selection_does_not_leak_into_next_global_request(api):
+    client, _, remote = api
+    first = add(client, "Urlaub")
+    second = add(client, "Rechnung")
+    for body, expected in [
+        ({"query": "Urlaub", "document_ids": [second["document_id"]]}, {second["document_id"]}),
+        ({"query": "Urlaub"}, {first["document_id"], second["document_id"]}),
+    ]:
+        assert client.post("/documents/ask", json=body).status_code == 200
+        context = json.loads(remote.responses.parse.call_args.kwargs["input"])["context"]
+        assert {chunk["document_id"] for chunk in context} == expected

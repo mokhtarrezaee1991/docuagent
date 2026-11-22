@@ -52,7 +52,7 @@ def request_backend(method: str, path: str, timeout: httpx.Timeout, **kwargs):
             409: "Kein Dokument indexiert. Bitte die Dokumentliste aktualisieren oder eine PDF hinzufügen.",
             413: "Die Datei überschreitet das 10-MB-Limit.",
             415: "Das Backend akzeptiert ausschließlich PDF-Dateien.",
-            422: "Die Anfrage ist ungültig. Bitte Frage und Trefferanzahl prüfen.",
+            422: "Die Anfrage oder Dokumentauswahl ist ungültig. Bitte Frage und Trefferanzahl prüfen und die Dokumentliste aktualisieren.",
             502: "Die KI-Antwort konnte nicht erstellt werden. Bitte API-Zugang und Verbindung im Backend prüfen.",
             503: "Das Backend ist derzeit nicht bereit. Bitte lokale Datenbank und API-Konfiguration im Backend prüfen.",
         }
@@ -107,17 +107,34 @@ def index_pdf(filename: str, file_bytes: bytes, *, append: bool = False) -> dict
     return metadata
 
 
-def ask_question(query: str, top_k: int = 3) -> dict:
+def ask_question(query: str, top_k: int = 3, *, document_ids: list[str] | None = None) -> dict:
     """Fordert eine Antwort an; der API-Schlüssel bleibt allein im Backend."""
     if not query.strip():
         raise ValueError("Bitte geben Sie eine Frage ein.")
-    result = post_backend("/documents/ask", ASK_TIMEOUT, json={"query": query, "top_k": top_k})
+    payload = {"query": query, "top_k": top_k}
+    if document_ids is not None:
+        payload["document_ids"] = document_ids
+    result = post_backend("/documents/ask", ASK_TIMEOUT, json=payload)
     if not isinstance(result, dict) or not isinstance(result.get("answer"), str) or not isinstance(result.get("sources"), list):
         raise BackendError("Das Backend hat ein ungültiges Antwortformat geliefert.")
     for source in result["sources"]:
         if not isinstance(source, dict) or any(type(source.get(key)) is not int for key in ("chunk_id", "page_number")):
             raise BackendError("Das Backend hat ungültige Quellenangaben geliefert.")
     return {"answer": result["answer"], "sources": result["sources"]}
+
+
+def reconcile_selection(documents: list[dict], selected_ids: list[str]) -> tuple[list[str], list[str]]:
+    """Entfernt veraltete IDs, ohne eine leere Auswahl zur globalen zu machen."""
+    available = {document["document_id"] for document in documents}
+    return (
+        list(dict.fromkeys(identifier for identifier in selected_ids if identifier in available)),
+        list(dict.fromkeys(identifier for identifier in selected_ids if identifier not in available)),
+    )
+
+
+def document_label(document: dict) -> str:
+    """Die vollständige ID unterscheidet auch gleiche Namen und ID-Präfixe."""
+    return f"{document['filename']} · ID: {document['document_id']}"
 
 
 def show_message(message: dict) -> None:
@@ -165,6 +182,8 @@ def main() -> None:
                     st.session_state.messages = []
                     st.session_state.pop("document_error", None)
                     st.success(f"Indexiert: {file.name}")
+                    st.session_state.documents = list_documents()
+                    st.session_state.pop("selection_invalid", None)
                 except (ValueError, BackendError) as error:
                     st.error(f"{file.name}: {error}")
         if st.button("Dokumentliste aktualisieren"):
@@ -174,6 +193,7 @@ def main() -> None:
                     st.session_state.messages = []
                 st.session_state.documents = refreshed
                 st.session_state.pop("document_error", None)
+                st.session_state.pop("selection_invalid", None)
             except BackendError as error:
                 st.session_state.document_error = str(error)
         if st.session_state.get("document_error"):
@@ -189,6 +209,11 @@ def main() -> None:
                         remove_document(document["document_id"])
                         st.session_state.documents = [item for item in st.session_state.documents if item["document_id"] != document["document_id"]]
                         st.session_state.messages = []
+                        try:
+                            st.session_state.documents = list_documents()
+                            st.session_state.pop("selection_invalid", None)
+                        except BackendError as error:
+                            st.session_state.document_error = str(error)
                         st.rerun()
                     except BackendError as error:
                         st.error(str(error))
@@ -196,26 +221,47 @@ def main() -> None:
         st.caption("Dokumenttexte und Embeddings bleiben lokal in SQLite gespeichert und werden beim Backend-Start geladen. Andere Sitzungen teilen denselben Index.")
 
     st.subheader("Fragen an Ihre Dokumente")
+    # Vor dem Widget-Aufbau abgleichen, damit gelöschte IDs nie unsichtbar bleiben.
+    selected, removed = reconcile_selection(
+        st.session_state.documents, st.session_state.get("selected_document_ids", []),
+    )
+    st.session_state.selected_document_ids = selected
+    if removed:
+        st.warning("Nicht mehr verfügbare Dokumente wurden aus Ihrer Auswahl entfernt. Bitte prüfen Sie die verbleibende Auswahl.")
+    scope = st.radio("Suchbereich", ["Alle Dokumente", "Einzelne Dokumente"], key="document_scope")
+    labels = {document["document_id"]: document_label(document) for document in st.session_state.documents}
+    selected = st.multiselect(
+        "Dokumente für die Frage", options=list(labels), key="selected_document_ids",
+        format_func=labels.__getitem__, disabled=scope == "Alle Dokumente",
+    )
+    document_ids = None if scope == "Alle Dokumente" else list(selected)
+    if document_ids == []:
+        st.info("Keine Dokumente ausgewählt. Eine Frage wird mit leerer Auswahl gesendet; es erfolgt keine Suche in allen Dokumenten.")
+    if st.session_state.get("selection_invalid"):
+        st.warning("Die Dokumentauswahl konnte nicht verwendet werden. Bitte zuerst die Dokumentliste aktualisieren.")
     st.caption("Das Absenden einer Frage nutzt die kostenpflichtige OpenAI API. Quellenreferenzen garantieren keine inhaltliche Richtigkeit.")
     if not st.session_state.documents:
         st.info("Bitte zuerst mindestens eine PDF auswählen und indexieren.")
     for message in st.session_state.messages:
         show_message(message)
 
-    query = st.chat_input("Was möchten Sie über Ihre Dokumente wissen?", disabled=not st.session_state.documents)
+    query = st.chat_input("Was möchten Sie über Ihre Dokumente wissen?", disabled=not st.session_state.documents or st.session_state.get("selection_invalid", False))
     if query:
         user_message = {"role": "user", "content": query}
         st.session_state.messages.append(user_message)
         show_message(user_message)
         try:
             with st.spinner("Passende Abschnitte werden gesucht und die Antwort wird erstellt …"):
-                result = ask_question(query)
+                result = ask_question(query, document_ids=document_ids)
             message = {"role": "assistant", "content": result["answer"], "sources": result["sources"]}
             st.session_state.messages.append(message)
             show_message(message)
         except (ValueError, BackendError) as error:
             if isinstance(error, BackendError) and error.status_code == 409:
                 st.session_state.documents = []
+            if isinstance(error, BackendError) and error.status_code == 422:
+                # Bis zur ausdrücklichen Aktualisierung keine möglicherweise alten IDs senden.
+                st.session_state.selection_invalid = True
             st.error(str(error))
 
 

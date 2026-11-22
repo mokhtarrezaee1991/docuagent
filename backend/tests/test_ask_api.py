@@ -201,13 +201,58 @@ def test_workflow_preserves_retrieval_mode(api, monkeypatch, mode):
     remote.responses.parse.assert_called_once()
 
 
-def test_public_request_schema_and_ignored_extra_fields_remain_unchanged(api):
-    """Interne Suchoptionen sind weiterhin keine öffentlichen Request-Felder."""
+def test_public_request_schema_adds_ids_only_for_ask(api):
+    """Nur /ask erhält die neue Auswahl; der Suchmodus bleibt intern."""
     http, _, _, _, _ = api
     index_document(http)
-    properties = http.get("/openapi.json").json()["components"]["schemas"]["SearchRequest"]["properties"]
-    assert set(properties) == {"query", "top_k"}
-    # Pydantic ignorierte zusätzliche Felder schon bisher; sie steuern keine Suche.
-    response = http.post("/documents/ask", json={"query": "Frage", "mode": "invalid", "document_ids": ["fremd"]})
+    schemas = http.get("/openapi.json").json()["components"]["schemas"]
+    assert set(schemas["SearchRequest"]["properties"]) == {"query", "top_k"}
+    assert set(schemas["AskRequest"]["properties"]) == {"query", "top_k", "document_ids"}
+    # Andere zusätzliche Felder werden weiterhin ignoriert.
+    response = http.post("/documents/ask", json={"query": "Frage", "mode": "invalid"})
     assert response.status_code == 200
     assert set(response.json()) == {"answer", "sources"}
+
+
+@pytest.mark.parametrize("ids", ["id", 12, {}, [None], [1], [True], [""], ["  "]])
+def test_invalid_document_id_shapes_return_422_without_calls(api, ids):
+    http, _, constructor, dotenv, _ = api
+    response = http.post("/documents/ask", json={"query": "Frage", "document_ids": ids})
+    assert response.status_code == 422
+    constructor.assert_not_called()
+    dotenv.assert_not_called()
+
+
+@pytest.mark.parametrize("ids", [[], ["unbekannt"]])
+def test_empty_index_keeps_409_for_valid_selection_shape(api, monkeypatch, ids):
+    http, _, constructor, dotenv, _ = api
+    monkeypatch.delenv("OPENAI_API_KEY")
+    response = http.post("/documents/ask", json={"query": "Frage", "document_ids": ids})
+    assert response.status_code == 409
+    constructor.assert_not_called()
+    dotenv.assert_not_called()
+
+
+@pytest.mark.parametrize("has_key,status", [(True, 200), (False, 503)])
+def test_explicit_empty_selection_never_searches_globally(api, monkeypatch, has_key, status):
+    http, remote, constructor, _, model = api
+    index_document(http)
+    model.encode.reset_mock()
+    if not has_key:
+        monkeypatch.delenv("OPENAI_API_KEY")
+    response = http.post("/documents/ask", json={"query": "Frage", "document_ids": []})
+    assert response.status_code == status
+    if has_key:
+        assert response.json() == {"answer": "Die Information wurde im Dokument nicht gefunden.", "sources": []}
+    model.encode.assert_not_called()
+    constructor.assert_not_called()
+    remote.responses.parse.assert_not_called()
+
+
+def test_legacy_single_document_accepts_own_id(api):
+    http, _, _, _, _ = api
+    index_document(http)
+    identifier = http.get("/documents").json()[0]["document_id"]
+    response = http.post("/documents/ask", json={"query": "Frage", "document_ids": [identifier]})
+    assert response.status_code == 200
+    assert response.json()["sources"] == [{"chunk_id": 1, "page_number": 1}]

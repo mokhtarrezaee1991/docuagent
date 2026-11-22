@@ -101,12 +101,30 @@ Die isolierte Policy verwendet ohne Vorgabe `semantic`. FastAPI übergibt den
 serverseitig konfigurierten `DOCUAGENT_RETRIEVAL_MODE` ausdrücklich, damit eine
 bestehende Hybrid-Konfiguration nicht auf Semantic zurückgesetzt wird.
 
-**Öffentliche API unverändert:** `/documents/ask` unterstützt weiterhin nur
-`query` und `top_k` (Standard 3) als Request-Felder und liefert `answer` und
-`sources`. `mode`, `document_ids` und Dateinamen sind keine öffentlichen
-Suchoptionen. Explizite Dokumentauswahl ist nur intern im Python-Service und
-Workflow verfügbar, nicht über FastAPI oder Streamlit. Zusätzliche JSON-Felder
-werden wie bisher ignoriert und steuern keine Suche. HTTP 409 (kein Index),
+**Öffentliche API, Phase 4a:** `/documents/ask` unterstützt `query`, `top_k`
+(Standard 3) und optional `document_ids` als Liste aktueller Dokument-IDs.
+Bestehende Anfragen ohne Auswahl bleiben global; auch `null` bedeutet global.
+`[]` wählt ausdrücklich keine Dokumente. Doppelte IDs zählen einmal. Ungültige,
+unbekannte und gelöschte IDs werden mit HTTP 422 abgewiesen, ohne interne
+Fehlerdetails auszugeben. Bei leerem Index hat HTTP 409 Vorrang vor der Prüfung
+inhaltlich unbekannter IDs; strukturell ungültige Eingaben bleiben HTTP 422.
+IDs können über `GET /documents` ermittelt werden. Beispiel:
+
+```json
+{"query": "Wie lang muss ein Passwort sein?", "top_k": 3, "document_ids": ["aktuelle-dokument-id"]}
+```
+
+Die Antwort bleibt `answer` und `sources`. `mode` und Dateinamen sind keine
+öffentlichen Suchoptionen. Streamlit bietet seit Phase 4b den Suchbereich
+„Alle Dokumente“ als Standard und alternativ „Einzelne Dokumente“ mit
+Mehrfachauswahl. Die Beschriftung zeigt Dateiname und vollständige Dokument-ID,
+auch bei gleichen Dateinamen. Intern werden nur IDs an `/documents/ask` gesendet.
+Eine leere Einzelauswahl sendet `document_ids: []`, niemals eine globale Ersatzsuche.
+Nach Upload oder Löschung wird die Dokumentliste neu geladen; entfernte ausgewählte
+IDs werden sichtbar gemeldet. Bei Änderungen aus anderen Sitzungen die Liste
+manuell aktualisieren. Nach HTTP 422 wird das Fragenstellen bis zur Aktualisierung
+gesperrt, damit ungültige Auswahlen nicht unbemerkt wiederholt werden.
+Andere zusätzliche JSON-Felder werden weiterhin ignoriert. HTTP 409 (kein Index),
 422 (ungültige Eingaben), 503 (fehlender Schlüssel) und 502 (Generierungsfehler)
 bleiben erhalten. Auch leerer Suchkontext umgeht die API-Schlüsselprüfung nicht;
 mit konfiguriertem Schlüssel benötigt der lokale Abstain-Pfad keinen API-Aufruf.
