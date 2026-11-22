@@ -14,6 +14,7 @@ This project is being developed as a practical portfolio project focused on **Ge
 - **PDF Text Extraction:** Extract text and preserve page information.
 - **Token-Based Chunking:** Split documents into manageable text sections with overlap.
 - **Semantic Search:** Find relevant document sections using multilingual sentence embeddings and cosine similarity.
+- **Search Policy and LangGraph:** Deterministic search planning, explicit internal document scopes, and generation or abstention.
 - **Retrieval-Augmented Generation (RAG):** Generate answers using OpenAI GPT-4.1-mini and retrieved document context.
 - **Source References:** Display document names, page numbers, and chunk references.
 - **Interactive Interface:** Ask questions through a Streamlit chat application.
@@ -30,6 +31,9 @@ This project is being developed as a practical portfolio project focused on **Ge
 | AI / LLM             | OpenAI GPT-4.1-mini   |
 | Embeddings           | Sentence Transformers |
 | Semantic Search      | Cosine Similarity     |
+| Retrieval alternatives | BM25, RRF, Snowball |
+| Workflow orchestration | LangGraph           |
+| Local persistence    | SQLite                |
 | PDF Processing       | PyMuPDF               |
 | Testing              | pytest                |
 | Version Control      | Git & GitHub          |
@@ -40,7 +44,7 @@ This project is being developed as a practical portfolio project focused on **Ge
 2. **Text Extraction:** The backend extracts text and page information.
 3. **Chunking:** Text is divided into token-based sections.
 4. **Embedding Generation:** A local Sentence Transformers model converts text chunks into numerical vectors.
-5. **Semantic Retrieval:** The system identifies relevant chunks based on the user's question.
+5. **Search Planning and Retrieval:** LangGraph applies the search policy and retrieves chunks using the configured search mode.
 6. **Answer Generation:** GPT-4.1-mini generates an answer using the retrieved context.
 7. **Source Attribution:** The application displays references to the original documents.
 
@@ -57,14 +61,115 @@ This project is being developed as a practical portfolio project focused on **Ge
                        |
               Local Embedding Model
                        |
-                Semantic Search
+          LangGraph: select_search
                        |
-                 Relevant Chunks
+                    retrieve
                        |
-                OpenAI GPT-4.1-mini
+          No hits: abstain (local)
+          Hits: generate (GPT-4.1-mini)
                        |
               Answer + PDF Sources
 ```
+
+### LangGraph und Search Policy: Phase 3a–3e
+
+Der Graph in `backend/app/workflows/document_qa.py` führt
+`select_search → retrieve → generate/abstain` aus. Jede Anfrage hat eigenen State.
+Der neue Node verwendet `select_search()` aus `search_policy.py` und aktuelle
+Dokumentmetadaten. Der validierte, unveränderliche `SearchPlan` trennt Suchmodus
+und Dokumentauswahl und hält die Entscheidung als `routing_reason` fest.
+`retrieve` verwendet vorhandene Dokument-Embeddings. Ohne Treffer folgt eine
+feste Verzichtsantwort mit `sources: []` ohne Generatoraufruf. Mit Treffern wird
+der vorhandene RAG-Service höchstens einmal aufgerufen. Er darf weiterhin
+verzichten, wenn die Information im Kontext fehlt; Treffer beweisen keine
+Beantwortbarkeit. Quellen müssen auf tatsächlich übergebene Abschnitte verweisen,
+was allein noch keine inhaltliche Richtigkeit garantiert.
+
+**Noch kein autonomer LLM-Router:** Die Policy verarbeitet ausschließlich
+explizite Metadaten, keine Dokumenttexte oder heuristisch erkannten Wörter/Zahlen.
+Es gibt weder zusätzliche LLM-Klassifikation noch selbständige Werkzeugplanung
+oder Routing-Wiederholungen. Der aktuelle Index wird je Anfrage aufgelöst;
+Hinzufügen und Löschen erfordern keine neue Graph-Kompilierung.
+
+| Suchmodus | Verfahren |
+| --- | --- |
+| `semantic` | Lokale mehrsprachige Embeddings und Kosinus-Ähnlichkeit; Standard |
+| `hybrid` | Semantic + BM25 ohne Stemming, gleichgewichtete RRF mit Konstante 60 |
+| `hybrid_de` | Hybrid mit identischer deutscher Snowball-Normalisierung für Fragen und Chunks |
+
+Die isolierte Policy verwendet ohne Vorgabe `semantic`. FastAPI übergibt den
+serverseitig konfigurierten `DOCUAGENT_RETRIEVAL_MODE` ausdrücklich, damit eine
+bestehende Hybrid-Konfiguration nicht auf Semantic zurückgesetzt wird.
+
+**Öffentliche API unverändert:** `/documents/ask` unterstützt weiterhin nur
+`query` und `top_k` (Standard 3) als Request-Felder und liefert `answer` und
+`sources`. `mode`, `document_ids` und Dateinamen sind keine öffentlichen
+Suchoptionen. Explizite Dokumentauswahl ist nur intern im Python-Service und
+Workflow verfügbar, nicht über FastAPI oder Streamlit. Zusätzliche JSON-Felder
+werden wie bisher ignoriert und steuern keine Suche. HTTP 409 (kein Index),
+422 (ungültige Eingaben), 503 (fehlender Schlüssel) und 502 (Generierungsfehler)
+bleiben erhalten. Auch leerer Suchkontext umgeht die API-Schlüsselprüfung nicht;
+mit konfiguriertem Schlüssel benötigt der lokale Abstain-Pfad keinen API-Aufruf.
+
+`DocumentCollection.search(..., document_ids=[...])` filtert vor Ranking und
+Top-k. `None` durchsucht alle Dokumente, `[]` ausdrücklich keines. Doppelte IDs
+zählen einmal. Unbekannte oder gelöschte IDs führen zu `ValueError`; es gibt keine
+teilweise oder globale Ersatzsuche. Gefilterte Hybrid-Suchen bauen ihren
+BM25-Index ausschließlich aus dem Teilbestand auf, ohne globalen BM25-Cache.
+Die Policy ordnet explizite Dateinamen nur exakt, case-sensitiv und eindeutig zu;
+bei gleichen Namen verlangt sie eine ID. Die Suche validiert IDs bei der
+Ausführung erneut, falls seit der Planung Dokumente gelöscht wurden.
+
+### Offline-Evaluation der Search Policy
+
+`backend/scripts/evaluate_search_policy.py` verwendet
+[18 unabhängige Routing-Fixtures](data/evaluation/search_policy_cases.json)
+mit vier synthetischen Dokumenten und fest vorgegebenen Testvektoren. Es führt
+die echte Kette **Search Policy → DocumentCollection.search()** aus, keinen
+Replay eines vorbereiteten Top-3-Kontexts. Fälle umfassen globale Suche,
+einzelne/mehrere/doppelte IDs, eindeutige und mehrdeutige Dateinamen, leere
+Auswahl, unbekannte/gelöschte IDs, ungültige Modi, konkurrierende Auswahlparameter
+und alle drei gültigen Suchmodi.
+
+Der [ausgeführte JSON-Bericht](docs/search_policy_offline_20261122_114757_420278.json)
+enthält Datensatz-SHA-256, Paketversionen, Pläne, Treffer, Scores und Laufzeiten.
+Er ergibt **18/18 korrekte Routing-Entscheidungen**, einschließlich **6/6 korrekt
+abgewiesener Fehlerfälle**. Relevanzmetriken beziehen sich auf neun Fälle;
+Fehlerfälle und explizite Leerauswahlen zählen nicht als Relevanzfragen.
+
+| Kennzahl | Globale Semantic-Baseline | Policy + Retrieval |
+| --- | ---: | ---: |
+| Hit Rate@1 | 44,44 % | 100 % |
+| Hit Rate@3 | 100 % | 100 % |
+| MRR@3 | 0,629630 | 1,000000 |
+| Treffer außerhalb des Sollbereichs, 12 gültige Routing-Fälle | 23 von 36 | 0 von 14 |
+| Summierte Laufzeit der jeweiligen Pfade | 0,88 ms | 2,35 ms |
+
+Gesamtlaufzeit des aufgezeichneten Laufs: rund **12,37 ms**. **0 LLM-, 0 OpenAI-
+und 0 externe API-Aufrufe.** Laufzeiten schwanken und sind keine belastbaren
+Performance-Benchmarks; die sonstigen Ergebnisse sind bei identischen Daten
+und Paketversionen reproduzierbar.
+
+Aus `backend` erneut ausführen:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/evaluate_search_policy.py
+```
+
+Jeder Lauf erstellt einen neuen Zeitstempel-Bericht unter `docs/`; vorhandene
+Ausgabedateien werden abgewiesen. Optional ist `--output` mit einem neuen Pfad
+möglich. Kein Modell-Download, OpenAI-Schlüssel oder `.env`-Zugriff ist nötig.
+Die bestehende Legacy-vs-LangGraph-Antwort-Evaluation bleibt separat.
+
+**Grenzen:** Der Top-1-Vorteil belegt die Funktion expliziter Dokumentauswahl in
+diesen kontrollierten Fixtures. Manuell festgelegte Vektoren und wiederkehrende
+Fragen beweisen keine bessere echte Embedding-Qualität, autonome Werkzeugwahl
+oder bessere LLM-Antworten. Die Baseline ignoriert Auswahlvorgaben absichtlich;
+ihre bereichsfremden Treffer sind kein Sicherheitsfehler. Suchmodus und Bereich
+können gleichzeitig variieren. MRR@3 ist auf drei Treffer begrenzt, anders als
+die bestehende Retrieval-Evaluation über die vollständige Rangliste. PDFs,
+Extraktion, SQLite, FastAPI und der vollständige Graph werden nicht End-to-End
+evaluiert.
 
 ## Development Roadmap
 
@@ -80,7 +185,8 @@ This project is being developed as a practical portfolio project focused on **Ge
 - [x] Automated testing
 - [x] Persistent document and embedding storage with SQLite
 - [ ] Advanced retrieval and answer-quality evaluation
-- [ ] AI agent workflows with LangGraph
+- [x] LangGraph document workflow, rule-based search policy and offline routing evaluation (Phase 3a–3e)
+- [ ] Autonomous LLM router, only after independently demonstrated benefit
 - [ ] Improved document analysis and information extraction
 - [ ] Deployment and CI/CD
 
@@ -131,7 +237,7 @@ Die semantische Suche bleibt der Standard. Optional kombiniert `hybrid` sie mit
 `BM25Okapi` aus dem etablierten Paket [rank-bm25](https://github.com/dorianbrown/rank_bm25).
 BM25 bewertet gemeinsame Wörter anhand von Häufigkeit, Seltenheit und Chunklänge.
 Dokumente und Fragen werden identisch in Unicode-Wörter/Zahlen zerlegt und mit
-`casefold` normalisiert. Es gibt derzeit kein Stemming und keine Stoppwortliste.
+`casefold` normalisiert. Im Modus `hybrid` gibt es kein Stemming und keine Stoppwortliste.
 
 Reciprocal Rank Fusion kombiniert die Ranglisten mit
 `RRF = 1/(60 + Rang_semantic) + 1/(60 + Rang_bm25)`.

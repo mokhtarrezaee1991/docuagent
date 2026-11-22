@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "description": "Unabhängige synthetische Routing-Fixtures. Vektoren sind fest vorgegebene Testdaten, keine echten Modell-Embeddings.",
+  "documents": [
+    {"document_id":"team-a","filename":"team.pdf","text":"Team A bietet Sprechstunden ab 8 Uhr an.","embedding":[0.8,0.6,0]},
+    {"document_id":"team-b","filename":"team.pdf","text":"Team B bietet Sprechstunden ab 10 Uhr an.","embedding":[0.99,0.1,0]},
+    {"document_id":"technik","filename":"technik.pdf","text":"Der synthetische Technikplan nennt einen Backup-Test jeden Montag.","embedding":[0,0,1]},
+    {"document_id":"archiv","filename":"archiv.pdf","text":"Im Archiv beginnen Sprechstunden um 9 Uhr.","embedding":[1,0,0]}
+  ],
+  "query_vectors": {"Wann beginnen die Sprechstunden?": [1,0,0], "Wann findet der Backup-Test statt?": [0,0,1]},
+  "cases": [
+    {"id":"R01","query":"Wann beginnen die Sprechstunden?","options":{},"expected_mode":"semantic","expected_ids":null,"relevant_ids":["archiv"]},
+    {"id":"R02","query":"Wann findet der Backup-Test statt?","options":{},"expected_mode":"semantic","expected_ids":null,"relevant_ids":["technik"]},
+    {"id":"R03","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":["team-a"]},"expected_mode":"semantic","expected_ids":["team-a"],"relevant_ids":["team-a"]},
+    {"id":"R04","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":["team-a"],"mode":"hybrid"},"expected_mode":"hybrid","expected_ids":["team-a"],"relevant_ids":["team-a"]},
+    {"id":"R05","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":["team-a"],"mode":"hybrid_de"},"expected_mode":"hybrid_de","expected_ids":["team-a"],"relevant_ids":["team-a"]},
+    {"id":"R06","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":["technik","team-a"]},"expected_mode":"semantic","expected_ids":["team-a","technik"],"relevant_ids":["team-a"]},
+    {"id":"R07","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":["team-a","team-a"]},"expected_mode":"semantic","expected_ids":["team-a"],"relevant_ids":["team-a"]},
+    {"id":"R08","query":"Wann findet der Backup-Test statt?","options":{"filename":"technik.pdf"},"expected_mode":"semantic","expected_ids":["technik"],"relevant_ids":["technik"]},
+    {"id":"R09","query":"Wann beginnen die Sprechstunden?","options":{"filename":"archiv.pdf"},"expected_mode":"semantic","expected_ids":["archiv"],"relevant_ids":["archiv"]},
+    {"id":"R10","query":"Wann beginnen die Sprechstunden?","options":{"filename":"team.pdf"},"expected_error":"mehrdeutig"},
+    {"id":"R11","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":[]},"expected_mode":"semantic","expected_ids":[],"relevant_ids":[]},
+    {"id":"R12","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":[],"mode":"hybrid"},"expected_mode":"hybrid","expected_ids":[],"relevant_ids":[]},
+    {"id":"R13","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":[],"mode":"hybrid_de"},"expected_mode":"hybrid_de","expected_ids":[],"relevant_ids":[]},
+    {"id":"R14","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":["unbekannt"]},"expected_error":"unbekannt"},
+    {"id":"R15","query":"Wann beginnen die Sprechstunden?","remove_ids":["team-a"],"options":{"document_ids":["team-a"]},"expected_error":"gelöscht"},
+    {"id":"R16","query":"Wann beginnen die Sprechstunden?","options":{"mode":"bm25"},"expected_error":"Suchmodus"},
+    {"id":"R17","query":"Wann beginnen die Sprechstunden?","options":{"filename":"fehlt.pdf"},"expected_error":"kein aktuelles"},
+    {"id":"R18","query":"Wann beginnen die Sprechstunden?","options":{"document_ids":[],"filename":"technik.pdf"},"expected_error":"entweder"}
+  ]
+}

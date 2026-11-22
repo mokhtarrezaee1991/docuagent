@@ -208,3 +208,34 @@ def test_ask_workflow_sees_additions_deletions_and_replacement(api):
     assert remote.responses.parse.call_count == before
     # Drei Indexierungen und vier Fragen: kein Dokument wurde erneut eingebettet.
     assert model.encode.call_count == 7
+
+
+@pytest.mark.parametrize("mode", [None, "semantic", "hybrid", "hybrid_de"])
+def test_ask_policy_uses_collection_metadata_and_configured_mode(api, monkeypatch, mode):
+    """Die Policy sieht den aktuellen Index und erhält den serverseitigen Modus."""
+    from app.workflows import document_qa
+    client, _, remote = api
+    first = add(client, "Urlaub")
+    second = add(client, "Rechnung")
+    if mode is None:
+        monkeypatch.delenv("DOCUAGENT_RETRIEVAL_MODE", raising=False)
+    else:
+        monkeypatch.setenv("DOCUAGENT_RETRIEVAL_MODE", mode)
+    collection = main.app.state.retrieval_pipeline
+    metadata = Mock(wraps=collection.list_documents)
+    search = Mock(wraps=collection.search)
+    policy = Mock(wraps=document_qa.select_search_policy)
+    monkeypatch.setattr(collection, "list_documents", metadata)
+    monkeypatch.setattr(collection, "search", search)
+    monkeypatch.setattr(document_qa, "select_search_policy", policy)
+
+    result = client.post("/documents/ask", json={"query": "Urlaub", "top_k": 2})
+
+    assert result.status_code == 200
+    assert set(result.json()) == {"answer", "sources"}
+    expected = mode or "semantic"
+    policy.assert_called_once_with([first, second], mode=expected, document_ids=None)
+    assert metadata.call_count >= 1
+    search.assert_called_once_with("Urlaub", top_k=2, mode=expected, document_ids=None)
+    remote.responses.parse.assert_called_once()
+    assert {chunk["document_id"] for chunk in json.loads(remote.responses.parse.call_args.kwargs["input"])["context"]} == {first["document_id"], second["document_id"]}

@@ -136,7 +136,7 @@ def test_workflow_empty_context_preserves_key_requirement(api, monkeypatch, has_
         assert response.json() == {"answer": "Die Information wurde im Dokument nicht gefunden.", "sources": []}
     else:
         assert "nicht konfiguriert" in response.json()["detail"]
-    search.assert_called_once_with("Unbekannte Information", top_k=2)
+    search.assert_called_once_with("Unbekannte Information", top_k=2, mode="semantic")
     dotenv.assert_called_once()
     generator.assert_not_called()
     constructor.assert_not_called()
@@ -179,7 +179,7 @@ def test_endpoint_invokes_existing_workflow(api, monkeypatch):
     response = http.post("/documents/ask", json={"query": "Frage"})
     assert response.status_code == 200
     assert response.json() == result
-    invoke.assert_called_once_with({"query": "Frage", "top_k": 3})
+    invoke.assert_called_once_with({"query": "Frage", "top_k": 3, "mode": "semantic"})
     constructor.assert_not_called()
 
 
@@ -199,3 +199,15 @@ def test_workflow_preserves_retrieval_mode(api, monkeypatch, mode):
     search.assert_called_once()
     assert search.call_args.kwargs["mode"] == (mode or "semantic")
     remote.responses.parse.assert_called_once()
+
+
+def test_public_request_schema_and_ignored_extra_fields_remain_unchanged(api):
+    """Interne Suchoptionen sind weiterhin keine öffentlichen Request-Felder."""
+    http, _, _, _, _ = api
+    index_document(http)
+    properties = http.get("/openapi.json").json()["components"]["schemas"]["SearchRequest"]["properties"]
+    assert set(properties) == {"query", "top_k"}
+    # Pydantic ignorierte zusätzliche Felder schon bisher; sie steuern keine Suche.
+    response = http.post("/documents/ask", json={"query": "Frage", "mode": "invalid", "document_ids": ["fremd"]})
+    assert response.status_code == 200
+    assert set(response.json()) == {"answer", "sources"}

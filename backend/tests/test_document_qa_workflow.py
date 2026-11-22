@@ -157,3 +157,139 @@ def test_invalid_input_stops_before_retrieval(query, top_k):
         workflow.invoke({"query": query, "top_k": top_k})
     retrieve.assert_not_called()
     generator.assert_not_called()
+
+
+@pytest.fixture
+def planned_collection(monkeypatch):
+    """Gleiche Dateinamen und Chunk-IDs, aber eindeutig unterscheidbare Dokumente."""
+    model = Mock()
+    model.encode.return_value = [[1.0, 0.0]]
+    monkeypatch.setattr(semantic_search, "_get_model", lambda: model)
+    collection = DocumentCollection()
+    for identifier, vector in [("a", [1.0, 0.0]), ("b", [0.8, 0.6])]:
+        collection.add_prepared(DocumentRetrievalPipeline.from_record({
+            "metadata": {"document_id": identifier, "filename": "gleich.pdf", "page_count": 1, "chunk_count": 1},
+            "chunks": [{"chunk_id": 1, "page_number": 1, "text": "Passwörter schützen", "embedding": vector}],
+        }))
+    return collection, model
+
+
+def test_select_search_node_reuses_policy_and_defaults(planned_collection, monkeypatch):
+    from app.workflows import document_qa
+    collection, _ = planned_collection
+    policy = Mock(wraps=document_qa.select_search_policy)
+    monkeypatch.setattr(document_qa, "select_search_policy", policy)
+    # Die neue Policy verwendet ihren eigenen Standard, keine automatische Hybridwahl.
+    monkeypatch.setenv("DOCUAGENT_RETRIEVAL_MODE", "hybrid_de")
+    graph = build_document_qa_workflow(
+        collection.search, Mock(return_value={"answer": "Test", "sources": []}),
+        get_documents=collection.list_documents,
+    )
+    state = graph.invoke({"query": "Passwort 14", "top_k": 3})
+    policy.assert_called_once_with(collection.list_documents(), mode=None, document_ids=None)
+    assert state["mode"] == "semantic" and state["document_ids"] is None
+    assert state["routing_reason"] == "all_documents;default_semantic"
+    assert {hit["document_id"] for hit in state["retrieved_chunks"]} == {"a", "b"}
+
+
+@pytest.mark.parametrize("mode", ["semantic", "hybrid", "hybrid_de"])
+def test_plan_filters_before_top_k_and_limits_generator_context(planned_collection, mode):
+    collection, model = planned_collection
+    generator = Mock(return_value={"answer": "Test", "sources": []})
+    graph = build_document_qa_workflow(collection.search, generator, get_documents=collection.list_documents)
+    state = graph.invoke({"query": "Passwort", "top_k": 1, "mode": mode, "document_ids": ["b", "b"]})
+    assert state["mode"] == mode and state["document_ids"] == ["b"]
+    assert state["routing_reason"] == "explicit_document_ids;explicit_mode"
+    assert [hit["document_id"] for hit in state["retrieved_chunks"]] == ["b"]
+    generator.assert_called_once_with("Passwort", state["retrieved_chunks"])
+    model.encode.assert_called_once_with(["Passwort"], convert_to_numpy=True)
+
+
+def test_empty_plan_abstains_without_generator_or_embedding(planned_collection):
+    collection, model = planned_collection
+    generator = Mock()
+    graph = build_document_qa_workflow(collection.search, generator, get_documents=collection.list_documents)
+    state = graph.invoke({"query": "Passwort", "top_k": 3, "document_ids": []})
+    assert state["document_ids"] == []
+    assert state["abstention_reason"] == "no_context"
+    assert state["result"]["sources"] == []
+    generator.assert_not_called()
+    model.encode.assert_not_called()
+
+
+@pytest.mark.parametrize("options", [{"document_ids": ["fremd"]}, {"mode": "bm25"}, {"document_ids": "a"}])
+def test_invalid_plan_stops_before_retrieval(planned_collection, options):
+    collection, model = planned_collection
+    retrieve, generator = Mock(wraps=collection.search), Mock()
+    graph = build_document_qa_workflow(retrieve, generator, get_documents=collection.list_documents)
+    with pytest.raises(ValueError):
+        graph.invoke({"query": "Frage", "top_k": 1, **options})
+    retrieve.assert_not_called()
+    generator.assert_not_called()
+    model.encode.assert_not_called()
+
+
+def test_metadata_is_current_and_deleted_ids_fail(planned_collection):
+    collection, _ = planned_collection
+    graph = build_document_qa_workflow(collection.search, Mock(return_value={"answer": "Test", "sources": []}), get_documents=collection.list_documents)
+    graph.invoke({"query": "Frage", "top_k": 1, "document_ids": ["b"]})
+    collection.remove_document("b")
+    with pytest.raises(ValueError, match="gelöscht"):
+        graph.invoke({"query": "Frage", "top_k": 1, "document_ids": ["b"]})
+
+
+def test_deletion_between_planning_and_search_is_rechecked(planned_collection):
+    collection, _ = planned_collection
+    generator = Mock()
+    def retrieve(query, *, top_k, mode, document_ids):
+        collection.remove_document("b")
+        return collection.search(query, top_k=top_k, mode=mode, document_ids=document_ids)
+
+    graph = build_document_qa_workflow(retrieve, generator, get_documents=collection.list_documents)
+    with pytest.raises(ValueError, match="gelöscht"):
+        graph.invoke({"query": "Frage", "top_k": 1, "document_ids": ["b"]})
+    generator.assert_not_called()
+
+
+def test_plan_isolation_between_sequential_and_parallel_requests(planned_collection):
+    collection, _ = planned_collection
+    graph = build_document_qa_workflow(collection.search, Mock(return_value={"answer": "Test", "sources": []}), get_documents=collection.list_documents)
+    graph.invoke({"query": "Frage", "top_k": 1, "mode": "hybrid_de", "document_ids": ["b"]})
+    default = graph.invoke({"query": "Frage", "top_k": 3})
+    assert default["mode"] == "semantic" and default["document_ids"] is None
+    assert default["routing_reason"] == "all_documents;default_semantic"
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        states = list(executor.map(lambda identifier: graph.invoke({
+            "query": "Frage", "top_k": 1, "document_ids": [identifier],
+        }), ["a", "b"]))
+    assert [state["retrieved_chunks"][0]["document_id"] for state in states] == ["a", "b"]
+
+
+@pytest.mark.parametrize("options", [{"mode": "semantic"}, {"document_ids": []}, {"document_ids": ["a"]}])
+def test_legacy_callable_never_silently_ignores_options(options):
+    retrieve, generator = Mock(), Mock()
+    graph = build_document_qa_workflow(retrieve, generator)
+    with pytest.raises(ValueError, match="Metadaten-Provider"):
+        graph.invoke({"query": "Frage", "top_k": 1, **options})
+    retrieve.assert_not_called()
+    generator.assert_not_called()
+
+
+def test_scoped_sources_are_validated_by_existing_rag_service(planned_collection, monkeypatch):
+    from types import SimpleNamespace
+    collection, _ = planned_collection
+    monkeypatch.setenv("OPENAI_API_KEY", "placeholder")
+    client = Mock()
+    client.responses.parse.return_value = SimpleNamespace(
+        status="completed", output_parsed=rag_service.MultiDocumentAnswer(
+            answer="Nicht belegt", sources=[rag_service.DocumentSource(document_id="a", chunk_id=1, page_number=1)],
+        ),
+    )
+    constructor = Mock()
+    constructor.return_value.__enter__ = Mock(return_value=client)
+    constructor.return_value.__exit__ = Mock(return_value=False)
+    monkeypatch.setattr(rag_service, "OpenAI", constructor)
+    graph = build_document_qa_workflow(collection.search, get_documents=collection.list_documents)
+    with pytest.raises(RuntimeError, match="nicht übergebene"):
+        graph.invoke({"query": "Frage", "top_k": 1, "document_ids": ["b"]})
+    client.responses.parse.assert_called_once()

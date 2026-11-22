@@ -14,6 +14,7 @@ from app.services.pdf_reader import extract_pdf_text
 from app.services.retrieval_pipeline import DocumentRetrievalPipeline, DocumentCollection
 from app.services.rag_service import generate_answer
 from app.services.document_store import SQLiteDocumentStore
+from app.services.hybrid_search import retrieval_mode
 from app.workflows.document_qa import build_document_qa_workflow
 
 
@@ -195,9 +196,21 @@ def search_document(request: SearchRequest):
     return pipeline.search(request.query, top_k=request.top_k)
 
 
-def retrieve_for_ask(query: str, *, top_k: int) -> list[dict]:
+def retrieve_for_ask(
+    query: str, *, top_k: int, mode: str, document_ids: list[str] | None,
+) -> list[dict]:
     """Löst den aktuellen Index auf und erhält die bisherige Schlüsselprüfung."""
-    chunks = search_document(SearchRequest(query=query, top_k=top_k))
+    pipeline = app.state.retrieval_pipeline
+    if pipeline is None or (isinstance(pipeline, DocumentCollection) and not pipeline.list_documents()):
+        raise HTTPException(status_code=409, detail="Bitte indexieren Sie zuerst eine PDF-Datei.")
+    if isinstance(pipeline, DocumentCollection):
+        chunks = pipeline.search(query, top_k=top_k, mode=mode, document_ids=document_ids)
+    else:
+        # Der Legacy-Index liefert weiterhin Quellen ohne zusätzliche Dokumentfelder.
+        # Öffentliche Anfragen haben keinen Filter; intern keinen Filter ignorieren.
+        if document_ids is not None and any(identifier != pipeline.document_id for identifier in document_ids):
+            raise ValueError("Mindestens eine Dokument-ID ist unbekannt oder wurde gelöscht.")
+        chunks = [] if document_ids == [] else pipeline.search(query, top_k=top_k, mode=mode)
     # Der feste Pfad funktioniert unabhängig vom Arbeitsverzeichnis.
     # Bereits gesetzte Umgebungsvariablen behalten Vorrang.
     load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env", override=False)
@@ -218,11 +231,17 @@ def generate_for_ask(query: str, chunks: list[dict]) -> dict:
 
 
 # Ein Graph, aber eigener State je Aufruf; der Retriever liest den Index erst dann.
-document_qa_workflow = build_document_qa_workflow(retrieve_for_ask, generate_for_ask)
+document_qa_workflow = build_document_qa_workflow(
+    retrieve_for_ask, generate_for_ask, get_documents=list_documents,
+)
 
 
 @app.post("/documents/ask")
 def ask_document(request: SearchRequest):
     """Beantwortet Dokumentfragen über den bestehenden LangGraph-Workflow."""
-    state = document_qa_workflow.invoke({"query": request.query, "top_k": request.top_k})
+    # Die serverseitige Konfiguration hat Vorrang vor dem Policy-Standard.
+    # mode und document_ids werden nicht als öffentliche Request-Felder ergänzt.
+    state = document_qa_workflow.invoke({
+        "query": request.query, "top_k": request.top_k, "mode": retrieval_mode(),
+    })
     return state["result"]
