@@ -14,12 +14,13 @@ This project is being developed as a practical portfolio project focused on **Ge
 - **PDF Text Extraction:** Extract text and preserve page information.
 - **Token-Based Chunking:** Split documents into manageable text sections with overlap.
 - **Semantic Search:** Find relevant document sections using multilingual sentence embeddings and cosine similarity.
-- **Search Policy and LangGraph:** Deterministic search planning, explicit internal document scopes, and generation or abstention.
+- **Search Policy and LangGraph:** Deterministic search planning, explicit document scopes, and generation or abstention.
 - **Retrieval-Augmented Generation (RAG):** Generate answers using OpenAI GPT-4.1-mini and retrieved document context.
 - **Source References:** Display document names, page numbers, and chunk references.
 - **Interactive Interface:** Ask questions through a Streamlit chat application.
 - **Document Management:** List and remove indexed documents.
 - **Automated Tests:** Unit and API tests for core functionality.
+- **Offline Experiments (not production-integrated):** Conservative retrieval diagnostics, one-retry query experiments, and MMR candidate-selection evaluation.
 
 ## Technology Stack
 
@@ -50,6 +51,9 @@ This project is being developed as a practical portfolio project focused on **Ge
 
 ## Current Architecture
 
+Produktiver Single-Pass-Ablauf; die isolierten Experimente aus Phase 6b–6e sind
+keine zusätzlichen Nodes und verändern diesen Anfragepfad nicht:
+
 ```text
                   Streamlit UI
                        |
@@ -70,6 +74,10 @@ This project is being developed as a practical portfolio project focused on **Ge
                        |
               Answer + PDF Sources
 ```
+
+Separat ausführbare Offline-Skripte prüfen Strukturdiagnose, Query-Retry und MMR.
+Es gibt keine produktive Qualitätsentscheidung, Query-Reformulierung, erneute
+Suche oder MMR-Auswahl im FastAPI-/Streamlit-Anfragepfad.
 
 ### LangGraph und Search Policy: Phase 3a–3e
 
@@ -295,15 +303,169 @@ Der perfekte lokale Modelllauf unterscheidet die Modi nicht ausreichend.
 Fixtures messen keine echte Embedding-Qualität, und beide Verfahren messen keine
 LLM-Antwortqualität. Deshalb wird keine automatische Aktivierung empfohlen.
 
-**Möglicher nächster Schritt – nur geplant:** zunächst eine isolierte Evaluation
-von Retrieval-Qualitätsprüfung und gezielter erneuter Suche. Dafür wären
-unabhängige Fälle mit fehlenden, unpassenden und ausreichenden Treffern sowie ein
-Vergleich gegen den bisherigen einzelnen Suchlauf nötig. Bewertet werden sollten
-Verbesserungen, Verschlechterungen, zusätzliche Laufzeit und Aufrufgrenzen.
-Ein fester Abbruch und höchstens eine zusätzliche Suche wären als experimentelle
-Grenzen vorab festzulegen. Diese Qualitätsprüfung und erneute Suche sind noch
-nicht implementiert oder produktiv angebunden; ein autonomer Agent ist damit
-weiterhin nicht vorhanden.
+### Isolierte Retrieval-Qualitätsdiagnose: Phase 6b
+
+`backend/app/workflows/retrieval_quality.py` stellt `diagnose_retrieval()` bereit.
+Es prüft ausschließlich Struktur: nutzbare nichtleere Texte, Zitiermetadaten,
+Dokument-IDs, erlaubten Dokumentbereich, Duplikate und verfügbare Scores.
+Es gibt keine universellen Score-Schwellen oder Keyword-Relevanzheuristiken.
+
+| Status | Tatsächliches Verhalten |
+| --- | --- |
+| `no_context` | Keine nutzbare, nichtleere Textstelle vorhanden |
+| `unknown` | Text vorhanden; semantische Belegbarkeit bleibt ungeprüft |
+| `sufficient` | Für ein validiertes Prüfverfahren reserviert; wird derzeit niemals vergeben |
+
+Fehlende Zitiermetadaten werden als Probleme gemeldet, ohne vorhandenen Text
+als fehlenden Kontext auszugeben. Unbekannte/gelöschte Dokument-IDs und Treffer
+außerhalb einer expliziten Auswahl bleiben Fehler. `document_ids=[]` bleibt leer.
+**Die Diagnose löst weder automatische Abstention noch Retry aus und ist nicht
+im produktiven Graphen integriert.** Der bereits bestehende lokale Abstain-Node
+bei leerer Trefferliste bleibt davon unabhängig.
+
+Die [32 kontrollierten Fälle](data/evaluation/retrieval_quality_cases.json)
+umfassen 16 Kategorien, je 16 Fälle in Entwicklung und Test mit getrennten
+Dokumenten und Fragefamilien. Es sind ausdrücklich Ranglisten-Fixtures, keine
+echten Modell-Rankings. Der [Bericht](docs/retrieval_quality_offline_20261122_191232_353828.json)
+zeigt 20-mal `unknown`, sechsmal `no_context` und sechs korrekt abgewiesene
+Fehlerfälle, darunter zwei Bereichsverletzungen. Falsches `no_context` bei
+vorhandenem Text: 0/20; `sufficient`: 0. Sowohl vollständig belegende als auch
+unzureichende oder irrelevante Texte erhalten `unknown`. Die 32/32 korrekt
+behandelten Strukturfälle sind kein Nachweis semantischer Antwortqualität.
+
+### Query-Retry-Experiment: Phase 6c und 6d
+
+`backend/app/workflows/query_retry_experiment.py` führt zuerst die Originalsuche
+aus. Nur bei ausdrücklichem `enabled=True` und einer vorgegebenen gültigen
+alternativen Anfrage ist genau eine zweite Suche erlaubt. Gleiche Anfragen nach
+`casefold`/Leerraumnormalisierung, fehlende/ungültige Alternativen und leere
+Dokumentauswahl führen zu keinem Retry. Es gibt keine LLM-Reformulierung oder
+automatische Auslösung durch `unknown`. Suchmodus und Dokumentbereich bleiben
+gleich; Fehler führen niemals zu einer globalen Ersatzsuche.
+
+Die vorab festgelegte Kontextregel schützt Original-Rang 1. Weitere Kandidaten
+werden mit gleichgewichteter RRF und Konstante 60 kombiniert, nach
+Dokument-ID/Chunk-ID/Seite dedupliziert und auf das finale Budget begrenzt.
+Bei Gleichstand hat die erste Suche Vorrang. Originalergebnisse bleiben separat
+erhalten; überlappende Treffer behalten deren ursprüngliche Metadaten und Scores.
+Niedriger platzierte erfolgreiche Originaltreffer sind nicht garantiert geschützt;
+mögliche Verschlechterungen werden deshalb explizit gemessen.
+
+Der [Retry-Datensatz](data/evaluation/query_retry_cases.json) enthält je acht
+Entwicklungs- und Testfälle mit getrennten Dokumenten und Fragefamilien.
+Je Split haben fünf Fälle erlaubte Relevanzreferenzen. Vollständige Evidenz ist
+von einem einzelnen relevanten Chunk zu unterscheiden; sie verlangt alle
+Referenzen einer mehrteiligen Frage.
+
+**Phase 6c – feste Vektoren:** Der [Fixture-Bericht](docs/query_retry_offline_20261122_200558_598018.json)
+verwendet echte Retrieval-Funktionen mit manuellen Testvektoren. Die Ergebnisse
+sind in beiden Splits gleich:
+
+| Verfahren | Hit@1 | Hit@3 | MRR@3 | Vollständige Evidenz |
+| --- | ---: | ---: | ---: | ---: |
+| Single-Pass, Top-3 | 20 % | 40 % | 0,3000 | 1/5 |
+| Single-Pass, Top-6 → Original-Top-3 | 20 % | 40 % | 0,3000 | 1/5 |
+| Retry, höchstens zweimal Top-3 | 20 % | 60 % | 0,3333 | 2/5 |
+
+Je Split: ein geretteter Fehlschlag, kein verschlechterter Erfolg und drei
+unnötige Retrys; Suchläufe 8/8/13. Die damalige Budget-Baseline betrachtet mehr
+Kandidaten, wählt aber ohne Re-Ranker weiterhin die ursprünglichen Top-3.
+Der Fixture-Vorteil belegt deshalb keinen robusten Reformulierungsvorteil oder
+bessere reale Antworten. Die Alternativen sind manuell vorgegeben und werden
+nicht auf semantische Absichtstreue geprüft.
+
+**Phase 6d – echte lokale Embeddings:** Dasselbe Skript verwendet mit
+`--embeddings local` das CPU-Modell
+`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` aus dem lokalen Cache.
+Die [lokale Auswertung](docs/query_retry_local_20261122_201331_651751.json)
+ergänzt eine sinnvollere Budget-Baseline: Top-6 der Originalfrage, danach MMR
+mit Lambda 0,5, geschütztem Original-Rang 1 und drei finalen Chunks. Eine
+Zusatzkontrolle wendet denselben MMR-Selektor auf die Retry-Kandidaten an.
+
+| Verfahren | Vollständige Evidenz Entwicklung | Vollständige Evidenz Test | Suchläufe je Split |
+| --- | ---: | ---: | ---: |
+| Single-Pass Top-3 | 5/5 | 4/5 | 8 |
+| Top-6 → MMR | 5/5 | 5/5 | 8 |
+| Retry mit unveränderter RRF-Regel | 5/5 | 4/5 | 13 |
+| Retry + MMR-Zusatzkontrolle | 5/5 | 5/5 | 13 |
+
+Hit@1, Hit@3 und MRR@3 betragen für alle Verfahren in beiden Splits 100 %,
+100 % und 1,0. Der unveränderte Retry rettet keinen Fehlschlag und verliert
+keinen bisherigen Erfolg; unnötige Retrys: fünf in Entwicklung, vier im Test.
+Die zusätzliche Evidenz im Test wird schon durch Einzelsuche plus MMR erreicht;
+ein Zusatznutzen der alternativen Suchanfrage ist nicht nachgewiesen.
+Alle Verfahren behalten maximal drei finale Chunks und denselben Dokumentbereich.
+MMR benötigt ein zusätzliches Originalfrage-Embedding pro nichtleerem Fall.
+Ein Warm-up und fünf Messläufe je Frage/Methode sind im Bericht dokumentiert.
+Die dortigen lokalen Laufzeiten trennen Modellladen und Dokument-Einbettung
+von Suche/Auswahl; sie sind keine belastbaren Performance-Benchmarks.
+
+### Unabhängige MMR-Kandidatenauswahl: Phase 6e
+
+`backend/scripts/evaluate_mmr_selection.py` untersucht einen
+[neuen Datensatz](data/evaluation/mmr_selection_cases.json) mit vier Dokumenten,
+36 Chunks und 20 Fragen. Je Split: zehn Fragen, davon sieben mit erlaubten
+Belegen, zwei mit fehlender Information und eine explizit leere Auswahl.
+Dokumente und Fragefamilien sind zwischen Entwicklung und Test getrennt;
+Phase-6d-Fälle dienen nur als Regressionstests, nicht als unabhängiger Erfolgsbeleg.
+Verwendet werden echte lokale Embeddings, Semantic Search, identische Filter
+und drei finale Chunks: entweder direkt Top-3 oder Top-6 mit MMR-Auswahl.
+
+Lambda wurde ausschließlich auf Entwicklung aus 0,25/0,5/0,75/1,0 gewählt.
+Vorab festgelegte Priorität: vollständige Evidenzrate, mittlere Faktenabdeckung,
+MRR@3 und bei Gleichstand höheres Lambda. Der Wert wird vor Test-Einbettung und
+Testauswertung eingefroren; auf dem Testsplit werden keine weiteren Werte geprüft.
+
+| Lambda, nur Entwicklung | Vollständige Evidenz |
+| --- | ---: |
+| 0,25 | 4/7 |
+| 0,5 | 5/7 |
+| 0,75 | 6/7 |
+| 1,0 (gewählt) | 6/7 |
+
+Lambda 1,0 nutzt keine Diversitätsstrafe. Der [MMR-Bericht](docs/mmr_selection_local_20261122_202517_474788.json)
+zeigt identische Top-3- und ausgewählte MMR-Ergebnisse: vollständige Evidenz
+6/7 auf Entwicklung und **5/7 auf dem zurückgehaltenen Testsplit**. Hit@1 und
+Hit@3 sind jeweils 100 %, MRR@3 ist 1,0. Es gibt beim festgelegten Lambda keine
+Verbesserungen oder Verschlechterungen; kleinere Lambdas verloren dagegen auf
+Entwicklung teilweise vollständige Belege. Geschützter Rang 1 bedeutet zudem,
+dass MMR Hit@1 grundsätzlich nicht verbessern kann.
+
+Nach einem Warm-up und fünf Wiederholungen je Fall beträgt der Suchmedian
+Top-3/MMR rund 29,17/59,15 ms auf Entwicklung und 31,48/62,98 ms auf Test.
+MMR verursacht je Benchmark-Durchgang neun zusätzliche Frage-Embeddings pro Split;
+Dokument-Embeddings werden einmalig berechnet. Trotz fehlender Information liefern
+beide Verfahren bei zwei Fragen je Split Kontext; daraus folgt keine Beantwortbarkeit.
+Bereichsverletzungen: 0. Alle Phase-6-Auswertungen verwenden 0 OpenAI-Aufrufe.
+
+### Phase-6-Experimente erneut ausführen
+
+Aus `backend`, jeweils mit dem vorhandenen virtuellen Interpreter:
+
+```powershell
+# Strukturdiagnose mit kontrollierten Ranglisten-Fixtures:
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval_quality.py
+# Retry mit festen Testvektoren:
+.\.venv\Scripts\python.exe scripts/evaluate_query_retry.py --embeddings fixtures
+# Retry und MMR-Budgetkontrolle mit echtem lokalem Modell:
+.\.venv\Scripts\python.exe scripts/evaluate_query_retry.py --embeddings local --repeats 5
+# Separater MMR-Vergleich mit ausschließlich entwicklungsbasierter Lambda-Wahl:
+.\.venv\Scripts\python.exe scripts/evaluate_mmr_selection.py --repeats 5
+```
+
+Jeder Lauf erstellt einen neuen Zeitstempel-Bericht unter `docs/`. Vorhandene
+Ausgabedateien werden abgewiesen; optional ist `--output` mit neuem Pfad möglich.
+Lokale Modellläufe erzwingen Offline-Betrieb und brauchen bereits gecachte
+Modellgewichte. Keine dieser Evaluationen benötigt OpenAI oder liest `.env`.
+
+**Produktionsstatus und Grenzen:** Diagnose, Retry und MMR sind isolierte
+Experimente, nicht in FastAPI, Streamlit oder den produktiven LangGraph eingebunden.
+Es wurde weder für Retry noch für MMR ein belastbarer Vorteil gegenüber dem
+bisherigen Single-Pass-Retrieval nachgewiesen; deshalb wurden sie nicht produktiv
+aktiviert. Kleine synthetische Datensätze, manuelle Alternativen und unterschiedliche
+Kontextselektoren begrenzen die Aussagen. Vollständige Referenzabdeckung beweist
+keine korrekte generierte Antwort. Ein autonomer LLM-Prüfer oder Router ist nicht
+implementiert; eine produktive Integration bleibt ein separater, noch offener Schritt.
 
 ## Development Roadmap
 
@@ -321,7 +483,9 @@ weiterhin nicht vorhanden.
 - [ ] Advanced retrieval and answer-quality evaluation
 - [x] LangGraph document workflow, rule-based search policy and offline routing evaluation (Phase 3a–3e)
 - [x] Isolated, disabled retrieval-mode policy and fixture/local-embedding evaluation (Phase 5b–5c)
-- [ ] Isolated evaluation of retrieval-quality checks and targeted repeat search (planned)
+- [x] Isolated structural retrieval diagnostics and offline query-retry experiments (Phase 6b–6d; not production-integrated)
+- [x] Independent local-embedding MMR evaluation with development-only lambda selection (Phase 6e; not production-integrated)
+- [ ] Production quality checks/retry/MMR, only after robust independent evidence of benefit
 - [ ] Autonomous LLM router, only after independently demonstrated benefit
 - [ ] Improved document analysis and information extraction
 - [ ] Deployment and CI/CD

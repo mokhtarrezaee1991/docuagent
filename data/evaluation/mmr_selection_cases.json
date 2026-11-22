@@ -1,0 +1,72 @@
+{
+  "version":1,
+  "description":"Neue synthetische Texte mit redundanten Passagen und mehrteiligen Fragen. 6d-Fragen sind ausgeschlossen. Gleichartige Struktur ist ein kontrollierter Funktionstest, keine Repräsentativitätsgarantie.",
+  "documents":[
+    {"document_id":"dev-feld","filename":"feldstation.pdf","split":"development","chunks":[
+      "An der Feldstation Nord bleiben Wasserproben in Kühlboxen bei 6 Grad Celsius.",
+      "Merkblatt der Feldstation: Für gelagerte Wasserproben gilt eine Kühltemperatur von 6 Grad Celsius.",
+      "Die Feldstation kontrolliert die Kühlboxen: Wasserproben sollen weiterhin 6 Grad Celsius haben.",
+      "Wasserproben dürfen höchstens acht Stunden bis zur Übergabe an den Kurier gelagert werden.",
+      "Jede Wasserprobe erhält ein Etikett mit Entnahmedatum und Messpunktnummer.",
+      "Vor einem Außeneinsatz werden die Messsonden mit einer neutralen Referenzlösung kalibriert.",
+      "Defekte Messsonden werden in einer roten Kiste gesammelt und freitags ausgetauscht.",
+      "Der Schlüssel zum Materialschrank hängt im Eingangsraum am blauen Brett.",
+      "Bei starkem Wind ab Stärke sieben bleibt das Außenteam im Stationsgebäude."
+    ]},
+    {"document_id":"dev-kurier","filename":"kurierplan.pdf","split":"development","chunks":[
+      "Der Kurier holt die Wasserproben werktags um 16 Uhr an der Feldstation Nord ab.",
+      "Abholung an der Feldstation: Der Probenkurier erscheint an Arbeitstagen um 16 Uhr.",
+      "Für die Übergabe müssen Kühlboxen mit Wasserproben rechtzeitig vor 16 Uhr bereitstehen.",
+      "Die Fahrt von der Feldstation zum Analyselabor dauert regulär 45 Minuten.",
+      "Bei Ausfall des Kuriers wird die Leitstelle über Funkkanal vier informiert.",
+      "Beschädigte Kühlboxen werden nicht transportiert und an die Stationsleitung gemeldet.",
+      "Der Kurier dokumentiert die Übergabe mit Uhrzeit und Unterschrift auf dem Begleitschein.",
+      "Leere Transportkisten bringt der Kurier am folgenden Werktag zurück.",
+      "Die maximal zulässige Beladung des Probenfahrzeugs beträgt zwölf Kühlboxen."
+    ]},
+    {"document_id":"test-boje","filename":"messboje.pdf","split":"test","chunks":[
+      "Die Messboje Süd speichert Messwerte des Meerwassers alle 20 Minuten.",
+      "Auf der Messboje werden die Meerwasserwerte regelmäßig im Abstand von 20 Minuten aufgezeichnet.",
+      "Das Protokoll der Messboje Süd nennt für Meerwassermessungen ein Aufzeichnungsintervall von 20 Minuten.",
+      "Gespeicherte Messwerte der Boje werden jeden Abend um 21 Uhr an die Küstenstation übertragen.",
+      "Bei Ausfall der Funkverbindung behält die Messboje ihre Messwerte für neun Tage im Pufferspeicher.",
+      "Der Salzgehaltssensor wird monatlich mit einer zertifizierten Salzlösung geprüft.",
+      "Eine rote Statusleuchte an der Boje kennzeichnet einen vollen Pufferspeicher.",
+      "Das Solarpanel der Boje ist nach Süden ausgerichtet.",
+      "Bei Wellen über drei Meter ist das Betreten der Messboje untersagt."
+    ]},
+    {"document_id":"test-wartung","filename":"bojenwartung.pdf","split":"test","chunks":[
+      "Das Wartungsboot fährt zur Messboje Süd jeweils dienstags um 7 Uhr.",
+      "Der Wartungsplan sieht für die Messboje eine Bootsfahrt am Dienstag um 7 Uhr vor.",
+      "Zur Abfahrt des Wartungsboots müssen die Techniker dienstags vor 7 Uhr am Hafen sein.",
+      "Die Überfahrt vom Hafen zur Messboje Süd dauert normalerweise 35 Minuten.",
+      "Vor einer Wartungsfahrt kontrolliert die Bootsführung Wetterbericht und Rettungswesten.",
+      "Bei Ausfall des Wartungsboots wird die Küstenstation über Funkkanal neun verständigt.",
+      "Die Wartung der Boje wird mit Datum und Unterschrift im Bordbuch dokumentiert.",
+      "Ausgebaute Sensoren werden an Bord in grauen Schutzkoffern aufbewahrt.",
+      "Das Wartungsboot darf höchstens sechs Personen einschließlich Bootsführung befördern."
+    ]}
+  ],
+  "questions":[
+    {"id":"D01","split":"development","family":"feldproben","query":"Wie kalt müssen Wasserproben bleiben und wie lange dürfen sie bis zum Kurier warten?","document_ids":["dev-feld"],"references":[{"document_id":"dev-feld","chunk_ids":[1,2,3],"evidence":"6 Grad Celsius"},{"document_id":"dev-feld","chunk_ids":[4],"evidence":"acht Stunden"}]},
+    {"id":"D02","split":"development","family":"feldproben","query":"Welche Angaben braucht das Probenetikett und wie wird vor dem Einsatz kalibriert?","document_ids":["dev-feld"],"references":[{"document_id":"dev-feld","chunk_ids":[5],"evidence":"Entnahmedatum und Messpunktnummer"},{"document_id":"dev-feld","chunk_ids":[6],"evidence":"neutralen Referenzlösung"}]},
+    {"id":"D03","split":"development","family":"kurierlogistik","query":"Wann kommt der Kurier und wie lange dauert die Fahrt zum Labor?","document_ids":["dev-kurier"],"references":[{"document_id":"dev-kurier","chunk_ids":[1,2],"evidence":"16 Uhr"},{"document_id":"dev-kurier","chunk_ids":[4],"evidence":"45 Minuten"}]},
+    {"id":"D04","split":"development","family":"kurierlogistik","query":"Wie müssen Wasserproben gelagert werden, wann holt sie der Kurier und wie ist die Übergabe nachzuweisen?","document_ids":null,"references":[{"document_id":"dev-feld","chunk_ids":[1,2,3],"evidence":"6 Grad Celsius"},{"document_id":"dev-kurier","chunk_ids":[1,2],"evidence":"16 Uhr"},{"document_id":"dev-kurier","chunk_ids":[7],"evidence":"Uhrzeit und Unterschrift"}]},
+    {"id":"D05","split":"development","family":"kurierlogistik","query":"Welcher Funkkanal wird verwendet, wenn der Kurier ausfällt?","document_ids":["dev-kurier"],"references":[{"document_id":"dev-kurier","chunk_ids":[5],"evidence":"Funkkanal vier"}]},
+    {"id":"D06","split":"development","family":"feldproben","query":"Wo werden kaputte Messsonden gesammelt und wann ersetzt man sie?","document_ids":["dev-feld"],"references":[{"document_id":"dev-feld","chunk_ids":[7],"evidence":"roten Kiste"}]},
+    {"id":"D07","split":"development","family":"kurierlogistik","query":"Wie viele Kühlboxen darf der Wagen höchstens laden?","document_ids":null,"references":[{"document_id":"dev-kurier","chunk_ids":[9],"evidence":"zwölf Kühlboxen"}]},
+    {"id":"D08","split":"development","family":"feldproben","query":"Wie lautet die Telefonnummer der Stationsleitung?","document_ids":null,"references":[],"absence_rationale":"Keiner der synthetischen Texte enthält Telefonnummern."},
+    {"id":"D09","split":"development","family":"kurierlogistik","query":"Wie viel kostet jede Kurierfahrt in Euro?","document_ids":["dev-kurier"],"references":[],"absence_rationale":"Der Kurierplan nennt keine Preise."},
+    {"id":"D10","split":"development","family":"feldproben","query":"Wie kalt bleiben Wasserproben?","document_ids":[],"references":[],"absence_rationale":"Explizit leere Dokumentauswahl."},
+    {"id":"T01","split":"test","family":"meerwerte","query":"In welchen Abständen misst die Boje und wann werden die gespeicherten Werte zur Küste übertragen?","document_ids":["test-boje"],"references":[{"document_id":"test-boje","chunk_ids":[1,2,3],"evidence":"20 Minuten"},{"document_id":"test-boje","chunk_ids":[4],"evidence":"21 Uhr"}]},
+    {"id":"T02","split":"test","family":"meerwerte","query":"Wie lange puffert die Boje bei Funkstörung und was bedeutet ihre rote Statusleuchte?","document_ids":["test-boje"],"references":[{"document_id":"test-boje","chunk_ids":[5],"evidence":"neun Tage"},{"document_id":"test-boje","chunk_ids":[7],"evidence":"vollen Pufferspeicher"}]},
+    {"id":"T03","split":"test","family":"bootswartung","query":"An welchem Tag und zu welcher Uhrzeit startet das Wartungsboot, und wie lange dauert die Fahrt?","document_ids":["test-wartung"],"references":[{"document_id":"test-wartung","chunk_ids":[1,2],"evidence":"7 Uhr"},{"document_id":"test-wartung","chunk_ids":[4],"evidence":"35 Minuten"}]},
+    {"id":"T04","split":"test","family":"bootswartung","query":"Wie oft werden Meerwasserwerte gespeichert, wann startet das Wartungsboot und wie wird seine Wartung dokumentiert?","document_ids":null,"references":[{"document_id":"test-boje","chunk_ids":[1,2,3],"evidence":"20 Minuten"},{"document_id":"test-wartung","chunk_ids":[1,2],"evidence":"7 Uhr"},{"document_id":"test-wartung","chunk_ids":[7],"evidence":"Datum und Unterschrift"}]},
+    {"id":"T05","split":"test","family":"bootswartung","query":"Auf welchem Kanal meldet man den Ausfall des Wartungsboots?","document_ids":["test-wartung"],"references":[{"document_id":"test-wartung","chunk_ids":[6],"evidence":"Funkkanal neun"}]},
+    {"id":"T06","split":"test","family":"meerwerte","query":"Womit und wie häufig wird der Salzgehaltssensor kontrolliert?","document_ids":["test-boje"],"references":[{"document_id":"test-boje","chunk_ids":[6],"evidence":"zertifizierten Salzlösung"}]},
+    {"id":"T07","split":"test","family":"bootswartung","query":"Wie viele Menschen einschließlich Bootsführung dürfen mitfahren?","document_ids":null,"references":[{"document_id":"test-wartung","chunk_ids":[9],"evidence":"sechs Personen"}]},
+    {"id":"T08","split":"test","family":"meerwerte","query":"Wie lautet die Telefonnummer der Küstenstation?","document_ids":null,"references":[],"absence_rationale":"Keine Telefonnummer in den synthetischen Texten."},
+    {"id":"T09","split":"test","family":"bootswartung","query":"Welche Versicherung bezahlt Schäden am Wartungsboot?","document_ids":["test-wartung"],"references":[],"absence_rationale":"Keine Versicherung wird genannt."},
+    {"id":"T10","split":"test","family":"meerwerte","query":"Wie oft misst die Boje?","document_ids":[],"references":[],"absence_rationale":"Explizit leere Dokumentauswahl."}
+  ]
+}

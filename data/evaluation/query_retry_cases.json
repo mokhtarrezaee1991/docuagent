@@ -1,0 +1,28 @@
+{
+  "version":1,
+  "description":"Kontrollierte Query-/Chunk-Vektoren mit echter DocumentCollection-Suche, keine Modell-Embeddings. Die Alternativen sind manuell vorab festgelegt. Kontextregel: Original-Rang 1 geschützt, restliche Kandidaten gleichgewichtete RRF(60), Gleichstand zugunsten Original.",
+  "splits":[
+    {"name":"development","family":"gewächshaus","document_id":"dev-haus","filename":"gewaechshaus.pdf","excluded_id":"dev-keller","excluded_filename":"keller.pdf",
+     "original_query":"Wie warm soll es für die Orchidee im Gewächshaus sein?","alternative_query":"Welche Temperatur braucht die Orchidee?",
+     "multipart_query":"Welche Temperatur benötigt die Orchidee und wie oft erhält sie Wasser?",
+     "texts":["Der Gewächshausplan beschreibt das Gebäude.","Die Orchidee erhält täglich Wasser.","Der Gewächshausplan enthält einen Rundgang.","Die Orchidee benötigt 23 Grad.","Die Beleuchtung ist violett.","Der Zaun besteht aus Holz."],
+     "excluded_text":"Im Keller steht ein Messgerät mit Seriennummer K77.","excluded_query":"Welche Seriennummer hat das Messgerät im Keller?","unanswerable_query":"Welche Seriennummer hat das Gerät im Gewächshaus?"},
+    {"name":"test","family":"bahnsteig","document_id":"test-bahn","filename":"bahnsteig.pdf","excluded_id":"test-depot","excluded_filename":"depot.pdf",
+     "original_query":"Wie lang soll der Rand am Bahnsteig sein?","alternative_query":"Welche Länge hat die Bahnsteigkante?",
+     "multipart_query":"Wie lang ist die Bahnsteigkante und wie oft wird sie gereinigt?",
+     "texts":["Die Bahnsteigübersicht beschreibt das Gelände.","Die Bahnsteigkante wird täglich gereinigt.","Die Bahnsteigübersicht enthält eine Wegbeschreibung.","Die Bahnsteigkante ist 87 Meter lang.","Die Beleuchtung ist orange.","Der Eingang besteht aus Glas."],
+     "excluded_text":"Im Depot steht ein Wagen mit Kennzeichen D44.","excluded_query":"Welches Kennzeichen hat der Wagen im Depot?","unanswerable_query":"Welches Kennzeichen hat der Wagen am Bahnsteig?"}
+  ],
+  "vectors":[[1,0],[0.98,0.2],[0.9,0.3],[0.3,1],[0,1],[-1,0]],
+  "original_vector":[1,0],"alternative_vector":[0.3,1],
+  "cases":[
+    {"id":"success","category":"successful_first_search","query":"alternative","alternative":"original","reference_chunks":[4]},
+    {"id":"rank4","category":"relevant_beyond_top3","query":"original","alternative":"alternative","reference_chunks":[4]},
+    {"id":"no_alternative","category":"missing_alternative","query":"original","alternative":null,"reference_chunks":[4]},
+    {"id":"same","category":"identical_alternative","query":"original","alternative":"normalized_original","reference_chunks":[4]},
+    {"id":"unanswerable","category":"unanswerable","query":"unanswerable","alternative":"alternative","reference_chunks":[]},
+    {"id":"multipart","category":"multipart_question","query":"multipart","alternative":"alternative","reference_chunks":[2,4]},
+    {"id":"excluded","category":"excluded_document","query":"excluded","alternative":"alternative","reference_chunks":[],"excluded_reference":true},
+    {"id":"empty","category":"empty_selection","query":"original","alternative":"alternative","reference_chunks":[],"empty_scope":true}
+  ]
+}

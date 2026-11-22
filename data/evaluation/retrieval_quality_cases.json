@@ -1,0 +1,40 @@
+{
+  "version":1,
+  "description":"Kontrollierte vollständige Ranglisten-Fixtures, keine echten Modell-Rankings. expected_status ist ein strukturelles Soll; semantic_label und evidence sind ausschließlich unabhängige Evaluationsreferenzen, niemals Diagnoseeingaben.",
+  "documents":[
+    {"document_id":"dev-wind","filename":"wind.pdf","split":"development"},
+    {"document_id":"dev-labor","filename":"labor.pdf","split":"development"},
+    {"document_id":"test-bienen","filename":"bienen.pdf","split":"test"},
+    {"document_id":"test-karten","filename":"karten.pdf","split":"test"}
+  ],
+  "splits":[
+    {"name":"development","family":"windlabor","primary_id":"dev-wind","other_id":"dev-labor",
+     "query":"Wie hoch steht der Windmast und wann wird er geprüft?",
+     "relevant_text":"Der Windmast ist 18 Meter hoch und wird im März geprüft.",
+     "partial_text":"Der Windmast ist 18 Meter hoch.","similar_text":"Der Windmast steht im Versuchsgelände.",
+     "unanswerable_query":"Welche Seriennummer hat das Windmessgerät?"},
+    {"name":"test","family":"bienenkarten","primary_id":"test-bienen","other_id":"test-karten",
+     "query":"Wie viele Bienenstöcke gibt es und wann erfolgt die Kontrolle?",
+     "relevant_text":"Es gibt sieben Bienenstöcke und die Kontrolle erfolgt im Juni.",
+     "partial_text":"Es gibt sieben Bienenstöcke.","similar_text":"Die Bienenstöcke stehen auf einer Wiese.",
+     "unanswerable_query":"Wer hat die Bienenstöcke versichert?"}
+  ],
+  "case_templates":[
+    {"id":"rank1","category":"relevant_rank1","ranking":["relevant","similar","partial"],"expected_rank":1,"expected_status":"unknown","semantic_label":"sufficient"},
+    {"id":"rank2","category":"relevant_rank2","ranking":["similar","relevant","partial"],"expected_rank":2,"expected_status":"unknown","semantic_label":"sufficient"},
+    {"id":"rank3","category":"relevant_rank3","ranking":["similar","partial","relevant"],"expected_rank":3,"expected_status":"unknown","semantic_label":"sufficient"},
+    {"id":"rank4","category":"relevant_beyond_top3","ranking":["similar","partial","distractor","relevant"],"expected_rank":4,"expected_status":"unknown","semantic_label":"insufficient"},
+    {"id":"similar","category":"thematically_similar","ranking":["similar"],"expected_rank":null,"expected_status":"unknown","semantic_label":"insufficient"},
+    {"id":"unanswerable","category":"unanswerable","ranking":["similar","partial"],"expected_rank":null,"expected_status":"unknown","semantic_label":"absent_from_documents"},
+    {"id":"partial","category":"multipart_partial","ranking":["partial"],"expected_rank":null,"expected_status":"unknown","semantic_label":"insufficient"},
+    {"id":"excluded","category":"excluded_evidence","ranking":["similar"],"scope":"other","expected_rank":null,"expected_status":"unknown","semantic_label":"outside_selected_documents"},
+    {"id":"empty_selection","category":"explicit_empty_selection","ranking":[],"scope":"empty","expected_rank":null,"expected_status":"no_context","semantic_label":"no_selected_documents"},
+    {"id":"empty_hits","category":"empty_hits","ranking":[],"expected_rank":null,"expected_status":"no_context","semantic_label":"insufficient"},
+    {"id":"blank","category":"blank_text","ranking":["blank"],"expected_rank":null,"expected_status":"no_context","semantic_label":"insufficient"},
+    {"id":"duplicate","category":"duplicate_hits","ranking":["relevant","relevant"],"expected_rank":1,"expected_status":"unknown","semantic_label":"sufficient"},
+    {"id":"metadata","category":"missing_metadata","ranking":["missing_metadata"],"expected_rank":null,"expected_status":"unknown","semantic_label":"unassessed"},
+    {"id":"violation","category":"scope_violation","ranking":["relevant"],"scope":"other","expected_error":true,"semantic_label":"invalid_scope"},
+    {"id":"unknown_id","category":"unknown_id","ranking":[],"scope":"unknown","expected_error":true,"semantic_label":"invalid_selection"},
+    {"id":"deleted_id","category":"deleted_id","ranking":[],"scope":"deleted","expected_error":true,"semantic_label":"invalid_selection"}
+  ]
+}
