@@ -299,7 +299,40 @@ Antworten und Qualitätsraten bleiben unbewertet. Der ausgeführte Dry-Run umfas
 Top-3-Kontext. **0 OpenAI-Aufrufe, 0 generierte Antworten.** Der
 [JSON-Bericht](docs/answer_evaluation_dry-run.json) enthält Sollantworten, Quellen,
 tatsächlichen Kontext und ausfüllbare Review-Felder. `--output` wählt einen anderen
-Berichtspfad; ein erneuter Lauf überschreibt den gewählten Bericht.
+Berichtspfad; vorhandene Berichte werden nicht überschrieben. Bei einem erneuten
+Lauf muss ein neuer Ausgabepfad angegeben werden.
+
+Mit `--workflow legacy` (Standard) wird die Antwort direkt durch den bisherigen
+RAG-Service erzeugt. `--workflow langgraph` verwendet den vorhandenen Workflow
+mit `retrieve`, `abstain` und `generate`. Beide Varianten erhalten exakt den
+vorbereiteten Kontext derselben Evaluationssammlung: Semantic Search, Top-3,
+identische Dokument-IDs, Chunks und Scores. Der Graph-Retriever gibt diese Treffer
+zurück, statt eine zweite Suche oder neue Dokument-Embeddings zu berechnen.
+
+Kostenlose Dry-Runs aus `backend`, mit jeweils neuem Berichtsnamen:
+
+```powershell
+$evaluationRun = Get-Date -Format 'yyyyMMdd_HHmmss_fff'
+.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode dry-run --workflow legacy --output "../docs/answer_eval_legacy_$evaluationRun.json"
+.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode dry-run --workflow langgraph --output "../docs/answer_eval_langgraph_$evaluationRun.json"
+```
+
+Der Dry-Run führt in beiden Varianten ausschließlich die gemeinsame
+Kontextvorbereitung aus, weder Graph noch Antwortgenerator; er misst keine
+Antwortqualität. Erst ein ausdrücklich bestätigter Live-Lauf führt den gewählten
+Antwortpfad aus. Bei leerer Trefferliste verzichtet LangGraph lokal ohne
+Generatoraufruf; legacy nutzt dafür den bestehenden Service ohne OpenAI-Aufruf.
+Die Aufrufzählung zählt dabei nur Generierungsversuche mit nichtleerem Kontext.
+Das Falllimit und die Kostenschätzung bleiben konservativ auf höchstens drei
+Fälle begrenzt. Beide Live-Varianten verlangen weiterhin einen Schlüssel in der
+Prozessumgebung, auch bei leerem Kontext.
+
+Dies ist ein Vergleich der Orchestrierung mit festem Retrieval-Kontext, kein
+FastAPI-End-to-End-Test: produktiver SQLite-Index, HTTP-Fehlerabbildung und
+`.env`-Laden sind nicht beteiligt. Metriken und Review-Auswertung bleiben gleich;
+der Bericht enthält zusätzlich `workflow` und eine Beschreibung der Vergleichsgrenzen.
+Der LangGraph-Standardbericht heißt `docs/answer_evaluation_langgraph_dry-run.json`
+bzw. `docs/answer_evaluation_langgraph_live.json`; die Legacy-Dateinamen bleiben erhalten.
 
 **Erst nach ausdrücklicher Freigabe: kontrollierter Live-Test mit höchstens drei Fragen:**
 

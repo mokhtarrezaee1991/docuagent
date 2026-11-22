@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "backend"))
 from app.services.pdf_reader import extract_pdf_text
 from app.services.retrieval_pipeline import DocumentCollection, DocumentRetrievalPipeline
 from app.services.rag_service import generate_answer, SYSTEM_PROMPT, MultiDocumentAnswer
+from app.workflows.document_qa import build_document_qa_workflow
 from evaluation.answer_metrics import assess_deterministic, pending_review, summarize
 from evaluation.retrieval_metrics import matches_reference
 from scripts.evaluate_retrieval import validate_references
@@ -105,10 +106,12 @@ def estimate_cost(cases: list[dict]) -> dict:
     }
 
 
-def run_evaluation(cases: list[dict], *, mode: str = "dry-run", confirm_live: bool = False, max_calls: int = 3, generator=None) -> dict:
+def run_evaluation(cases: list[dict], *, mode: str = "dry-run", workflow: str = "legacy", confirm_live: bool = False, max_calls: int = 3, generator=None) -> dict:
     """Startet standardmäßig keine Antwortgenerierung und niemals einen LLM-Judge."""
     if mode not in ("dry-run", "live") or type(max_calls) is not int or not 1 <= max_calls <= MAX_CALLS:
         raise ValueError("Modus muss dry-run/live und max_calls eine ganze Zahl zwischen 1 und 3 sein.")
+    if workflow not in ("legacy", "langgraph"):
+        raise ValueError("Workflow muss legacy oder langgraph sein.")
     if mode == "live" and not confirm_live:
         raise ValueError("Live benötigt die ausdrückliche Bestätigung --confirm-live.")
     planned = cases[:max_calls]
@@ -126,9 +129,23 @@ def run_evaluation(cases: list[dict], *, mode: str = "dry-run", confirm_live: bo
             if index >= max_calls or stopped:
                 row["status"] = "skipped_call_limit_or_prior_error"
             else:
-                attempted += 1
                 try:
-                    result = (generator or generate_answer)(case["query"], case["context"])
+                    def generate(query, context):
+                        nonlocal attempted
+                        # Leerer Kontext benötigt auch im bisherigen Service keine API.
+                        if any(chunk["text"].strip() for chunk in context):
+                            attempted += 1
+                        return (generator if generator is not None else generate_answer)(query, context)
+
+                    if workflow == "langgraph":
+                        def retrieve(query, *, top_k):
+                            # Exakt der einmalig vorbereitete semantische Top-3-Kontext.
+                            return case["context"]
+
+                        graph = build_document_qa_workflow(retrieve, generate)
+                        result = graph.invoke({"query": case["query"], "top_k": 3})["result"]
+                    else:
+                        result = generate(case["query"], case["context"])
                     row.update(status="completed", result=result, deterministic=assess_deterministic(case, result, case["context"]))
                 except (RuntimeError, ValueError):
                     # Keine rohen API-Fehler oder Schlüssel in Berichte/Logs übernehmen.
@@ -137,12 +154,13 @@ def run_evaluation(cases: list[dict], *, mode: str = "dry-run", confirm_live: bo
         rows.append(row)
     answerable = [case for case in cases if case["answerable"]]
     return {
-        "mode": mode, "answer_model": "gpt-4.1-mini", "retrieval_mode": "semantic", "top_k": 3,
+        "mode": mode, "workflow": workflow, "answer_model": "gpt-4.1-mini", "retrieval_mode": "semantic", "top_k": 3,
         "api_calls_attempted": attempted, "max_calls": max_calls, "automatic_retries": 0,
         "max_output_tokens_per_answer": 1000, "judge_api_calls": 0, "cost_estimate": cost,
         "summary": summarize(rows), "questions": rows,
         "retrieval_context_coverage": {"matched": sum(case["context_contains_expected_evidence"] for case in answerable), "answerable_questions": len(answerable)},
         "review_rubric": json.loads(RUBRIC.read_text(encoding="utf-8")),
+        "workflow_comparison": "Beide Varianten verwenden denselben vorbereiteten Kontext aus einer separaten Sammlung, semantic und top_k=3. LangGraph erhält diese Treffer über einen Kontext-Retriever ohne zweite Suche. Bei leerer Trefferliste verzichtet LangGraph lokal, legacy verwendet den bestehenden Service ohne API-Aufruf. Dry-run bereitet nur Kontext vor und führt weder Antwortgenerator noch Graph aus. FastAPI, dessen Index und HTTP-Fehlerabbildung werden nicht evaluiert. Live benötigt in beiden Varianten einen Schlüssel in der Prozessumgebung.",
         "limitations": "Regex-Faktentreffer, gültige IDs und Verweigerungssignale beweisen keine vollständige Correctness, Faithfulness oder Citation Accuracy. Semantische Reviews sind unbewertet. LLM-Ausgaben können bei Wiederholung variieren. Teilmetriken enthalten nur abgeschlossene, anwendbare Fälle; Fehler und ausgelassene Fragen werden gesondert ausgewiesen.",
     }
 
@@ -150,6 +168,7 @@ def run_evaluation(cases: list[dict], *, mode: str = "dry-run", confirm_live: bo
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("dry-run", "live"), default="dry-run")
+    parser.add_argument("--workflow", choices=("legacy", "langgraph"), default="legacy")
     parser.add_argument("--confirm-live", action="store_true", help="Erlaubt kostenpflichtige Antworten, keinen LLM-Judge.")
     parser.add_argument("--max-calls", type=int, choices=(1, 2, 3), default=3)
     parser.add_argument("--ids", nargs="+", help="Frage-IDs in gewünschter Reihenfolge, z.B. A01 A11 A21")
@@ -157,17 +176,22 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     if args.mode == "live" and not args.confirm_live:
         parser.error("Live benötigt --confirm-live. Ohne Freigabe ausschließlich dry-run verwenden.")
+    default_name = f"answer_evaluation_{args.mode}.json" if args.workflow == "legacy" else f"answer_evaluation_langgraph_{args.mode}.json"
+    output = args.output or ROOT / "docs" / default_name
+    if output.exists():
+        parser.error("Der Bericht existiert bereits. Bitte mit --output einen neuen Dateinamen wählen.")
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
     cases, documents = prepare_cases(load_cases(args.ids))
-    report = run_evaluation(cases, mode=args.mode, confirm_live=args.confirm_live, max_calls=args.max_calls)
+    report = run_evaluation(cases, mode=args.mode, workflow=args.workflow, confirm_live=args.confirm_live, max_calls=args.max_calls)
     report.update(documents=documents, fingerprints={
         path.name: sha256(path.read_bytes()).hexdigest() for path in (DATASET, RETRIEVAL_DATASET, RUBRIC)
     }, system_prompt_sha256=sha256(SYSTEM_PROMPT.encode()).hexdigest())
-    output = args.output or ROOT / f"docs/answer_evaluation_{args.mode}.json"
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"Modus: {args.mode}; Fragen: {len(cases)}; API-Aufrufversuche: {report['api_calls_attempted']}; abgeschlossene Antworten: {report['summary']['completed_answers']}")
+    # Exklusives Erstellen schützt auch vor einem gleichzeitig angelegten Bericht.
+    with output.open("x", encoding="utf-8") as handle:
+        handle.write(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+    print(f"Workflow: {args.workflow}; Modus: {args.mode}; Fragen: {len(cases)}; API-Aufrufversuche: {report['api_calls_attempted']}; abgeschlossene Antworten: {report['summary']['completed_answers']}")
     print(f"Retrieval-Kontext mit Sollbeleg: {report['retrieval_context_coverage']}")
     print("Semantische Antwortbewertungen: nicht ausgeführt. Siehe Review-Rubrik.")
     print(f"JSON-Bericht: {output}")

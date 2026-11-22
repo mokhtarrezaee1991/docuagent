@@ -65,9 +65,11 @@ def test_abstention_and_missing_sources():
     assert not assess_deterministic(unknown, answer(refusal["answer"]), unknown["context"])["correct_abstention_proxy"]
 
 
-def test_dry_run_never_calls_generator_or_reports_quality():
+@pytest.mark.parametrize("workflow", ["legacy", "langgraph"])
+def test_dry_run_never_calls_generator_or_reports_quality(workflow):
     forbidden = Mock(side_effect=AssertionError("Keine API-Aufrufe erlaubt"))
-    report = evaluation.run_evaluation([case(), case(False)], generator=forbidden)
+    report = evaluation.run_evaluation([case(), case(False)], generator=forbidden, workflow=workflow)
+    assert report["workflow"] == workflow
     forbidden.assert_not_called()
     assert report["api_calls_attempted"] == 0
     assert report["summary"]["completed_answers"] == 0
@@ -86,22 +88,24 @@ def test_live_needs_explicit_confirmation():
         evaluation.run_evaluation([case()], mode="live")
 
 
-def test_missing_key_does_not_call_generator(monkeypatch):
+@pytest.mark.parametrize("workflow", ["legacy", "langgraph"])
+def test_missing_key_does_not_call_generator(monkeypatch, workflow):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     generator = Mock()
     with pytest.raises(ValueError, match="Prozessumgebung"):
-        evaluation.run_evaluation([case()], mode="live", confirm_live=True, generator=generator)
+        evaluation.run_evaluation([case()], mode="live", workflow=workflow, confirm_live=True, generator=generator)
     generator.assert_not_called()
 
 
-def test_mocked_live_is_bounded_and_cost_printed_first(monkeypatch, capsys):
+@pytest.mark.parametrize("workflow", ["legacy", "langgraph"])
+def test_mocked_live_is_bounded_and_cost_printed_first(monkeypatch, capsys, workflow):
     monkeypatch.setenv("OPENAI_API_KEY", "placeholder")
     def generate(query, context):
         if generator.call_count == 1:
             assert "Geschätzte Kosten" in capsys.readouterr().out
         return answer()
     generator = Mock(side_effect=generate)
-    report = evaluation.run_evaluation([case() for _ in range(5)], mode="live", confirm_live=True, max_calls=3, generator=generator)
+    report = evaluation.run_evaluation([case() for _ in range(5)], mode="live", workflow=workflow, confirm_live=True, max_calls=3, generator=generator)
     assert generator.call_count == 3
     assert report["api_calls_attempted"] == 3
     assert report["summary"]["completed_answers"] == 3
@@ -109,10 +113,11 @@ def test_mocked_live_is_bounded_and_cost_printed_first(monkeypatch, capsys):
     assert sum(row["status"].startswith("skipped") for row in report["questions"]) == 2
 
 
-def test_error_stops_live_without_retry_or_leaking_details(monkeypatch):
+@pytest.mark.parametrize("workflow", ["legacy", "langgraph"])
+def test_error_stops_live_without_retry_or_leaking_details(monkeypatch, workflow):
     monkeypatch.setenv("OPENAI_API_KEY", "placeholder")
     generator = Mock(side_effect=RuntimeError("Interne vertrauliche Diagnose"))
-    report = evaluation.run_evaluation([case(), case()], mode="live", confirm_live=True, generator=generator)
+    report = evaluation.run_evaluation([case(), case()], mode="live", workflow=workflow, confirm_live=True, generator=generator)
     generator.assert_called_once()
     assert report["summary"]["failed_answers"] == 1
     assert report["summary"]["completed_answers"] == 0
@@ -159,17 +164,21 @@ def test_cli_rejects_unconfirmed_live_before_model_loading(monkeypatch):
     prepare.assert_not_called()
 
 
-def test_cli_dry_run_writes_json_without_answer_metrics(monkeypatch, tmp_path):
+@pytest.mark.parametrize("workflow", [None, "legacy", "langgraph"])
+def test_cli_dry_run_writes_json_without_answer_metrics(monkeypatch, tmp_path, workflow):
     monkeypatch.setattr(evaluation, "prepare_cases", lambda cases: ([case()], []))
     output = tmp_path / "report.json"
-    assert evaluation.main(["--mode", "dry-run", "--output", str(output)]) == 0
+    options = ["--workflow", workflow] if workflow else []
+    assert evaluation.main(["--mode", "dry-run", "--output", str(output), *options]) == 0
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["mode"] == "dry-run"
+    assert report["workflow"] == (workflow or "legacy")
     assert report["api_calls_attempted"] == 0
     assert report["summary"]["citation_reference_validity"]["value"] is None
 
 
-def test_live_contract_with_mocked_sdk_never_sends_gold_answers(monkeypatch):
+@pytest.mark.parametrize("workflow", ["legacy", "langgraph"])
+def test_live_contract_with_mocked_sdk_never_sends_gold_answers(monkeypatch, workflow):
     """Prüft auch das bestehende SDK-Aufruflimit, ohne eine Verbindung aufzubauen."""
     from types import SimpleNamespace
     from app.services import rag_service
@@ -185,7 +194,7 @@ def test_live_contract_with_mocked_sdk_never_sends_gold_answers(monkeypatch):
     constructor.return_value.__enter__ = Mock(return_value=client)
     constructor.return_value.__exit__ = Mock(return_value=False)
     monkeypatch.setattr(rag_service, "OpenAI", constructor)
-    report = evaluation.run_evaluation([case()], mode="live", confirm_live=True)
+    report = evaluation.run_evaluation([case()], mode="live", workflow=workflow, confirm_live=True)
     assert report["summary"]["completed_answers"] == 1
     assert constructor.call_args.kwargs["max_retries"] == 0
     request = client.responses.parse.call_args.kwargs
@@ -194,4 +203,83 @@ def test_live_contract_with_mocked_sdk_never_sends_gold_answers(monkeypatch):
     payload = json.loads(request["input"])
     assert set(payload) == {"query", "context"}
     assert "expected_answer" not in payload and "references" not in payload
+    assert payload["context"] == case()["context"]
+    assert report["questions"][0]["result"] == answer()
+    client.responses.parse.assert_called_once()
+
+
+def test_invalid_workflow_is_rejected_before_preparation(monkeypatch):
+    prepare = Mock(side_effect=AssertionError("Nicht vorbereiten"))
+    monkeypatch.setattr(evaluation, "prepare_cases", prepare)
+    with pytest.raises(SystemExit):
+        evaluation.main(["--workflow", "unknown"])
+    with pytest.raises(ValueError, match="Workflow"):
+        evaluation.run_evaluation([case()], workflow="unknown")
+    prepare.assert_not_called()
+
+
+def test_existing_report_is_not_overwritten(monkeypatch, tmp_path):
+    output = tmp_path / "existing.json"
+    output.write_text("Unveränderter Bericht", encoding="utf-8")
+    prepare = Mock(side_effect=AssertionError("Nicht vorbereiten"))
+    monkeypatch.setattr(evaluation, "prepare_cases", prepare)
+    with pytest.raises(SystemExit):
+        evaluation.main(["--workflow", "langgraph", "--output", str(output)])
+    assert output.read_text(encoding="utf-8") == "Unveränderter Bericht"
+    prepare.assert_not_called()
+
+
+@pytest.mark.parametrize("workflow", ["legacy", "langgraph"])
+def test_workflow_context_and_metrics_are_identical(monkeypatch, workflow):
+    """Nur Orchestrierung variiert; Rangfolge, Quellen und Bewertung bleiben gleich."""
+    monkeypatch.setenv("OPENAI_API_KEY", "placeholder")
+    generator = Mock(return_value=answer())
+    row = case()
+    report = evaluation.run_evaluation([row], mode="live", workflow=workflow, confirm_live=True, generator=generator)
+    generator.assert_called_once_with(row["query"], row["context"])
+    assert report["questions"][0]["context"] == row["context"]
+    assert report["questions"][0]["deterministic"] == assess_deterministic(row, answer(), row["context"])
+    assert report["api_calls_attempted"] == 1
+
+
+def test_langgraph_empty_context_does_not_call_generator(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "placeholder")
+    row = {**case(False), "context": []}
+    generator = Mock(side_effect=AssertionError("Kein Generator ohne Treffer"))
+    report = evaluation.run_evaluation([row], mode="live", workflow="langgraph", confirm_live=True, generator=generator)
+    generator.assert_not_called()
+    assert report["api_calls_attempted"] == 0
+    assert report["questions"][0]["result"]["sources"] == []
+    assert report["summary"]["correct_abstention_proxy"]["value"] == 1
+
+
+def test_langgraph_uses_existing_graph(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "placeholder")
+    build = Mock(wraps=evaluation.build_document_qa_workflow)
+    monkeypatch.setattr(evaluation, "build_document_qa_workflow", build)
+    evaluation.run_evaluation([case()], mode="live", workflow="langgraph", confirm_live=True, generator=Mock(return_value=answer()))
+    build.assert_called_once()
+
+
+@pytest.mark.parametrize("workflow", ["legacy", "langgraph"])
+def test_foreign_source_is_rejected_by_existing_service(monkeypatch, workflow):
+    """Auch der Graph muss die vorhandene Quellenvalidierung durchlaufen."""
+    from types import SimpleNamespace
+    from app.services import rag_service
+
+    monkeypatch.setenv("OPENAI_API_KEY", "placeholder")
+    client = Mock()
+    client.responses.parse.return_value = SimpleNamespace(
+        status="completed", output_parsed=rag_service.MultiDocumentAnswer(
+            answer="Unbelegt", sources=[rag_service.DocumentSource(document_id="fremd", chunk_id=1, page_number=1)],
+        ),
+    )
+    constructor = Mock()
+    constructor.return_value.__enter__ = Mock(return_value=client)
+    constructor.return_value.__exit__ = Mock(return_value=False)
+    monkeypatch.setattr(rag_service, "OpenAI", constructor)
+    report = evaluation.run_evaluation([case(), case()], mode="live", workflow=workflow, confirm_live=True)
+    assert report["summary"]["failed_answers"] == 1
+    assert report["questions"][0]["result"] is None
+    assert report["questions"][1]["status"] == "skipped_call_limit_or_prior_error"
     client.responses.parse.assert_called_once()
