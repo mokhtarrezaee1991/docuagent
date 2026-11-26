@@ -23,8 +23,6 @@ jobs:
       TRANSFORMERS_OFFLINE: "1"
       HF_DATASETS_OFFLINE: "1"
       HF_HUB_DISABLE_TELEMETRY: "1"
-      HF_HOME: ${{ runner.temp }}/docuagent-empty-hf
-      SENTENCE_TRANSFORMERS_HOME: ${{ runner.temp }}/docuagent-empty-st
       STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
       PYTHON_DOTENV_DISABLED: "1"
     steps:
@@ -45,6 +43,8 @@ jobs:
       - name: Run complete offline test suite
         working-directory: backend
         env:
+          HF_HOME: ${{ runner.temp }}/docuagent-empty-hf
+          SENTENCE_TRANSFORMERS_HOME: ${{ runner.temp }}/docuagent-empty-st
           PYTHONPATH: ${{ github.workspace }}/ci/offline_guard
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
         run: |
