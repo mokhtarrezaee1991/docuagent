@@ -1,0 +1,1005 @@
+{
+  "version": 1,
+  "description": "16 neue synthetische Fälle, getrennte Dokumente/Familien je Split. Evidenz und Sollverhalten sind Testreferenzen, keine Bewertung erzeugter Antworten.",
+  "documents": [
+    {
+      "document_id": "dev-verleih",
+      "filename": "verleih.pdf",
+      "split": "development",
+      "chunks": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Bohrmaschinen kosten 10 Euro pro Tag und werden nur mit Reservierung ausgegeben."
+        },
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 2,
+          "page_number": 1,
+          "text": "Reservierungen müssen zwei Werktage im Voraus eingehen. Zur Abholung ist ein Lichtbildausweis nötig."
+        },
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 3,
+          "page_number": 1,
+          "text": "Ein Versand der Geräte ist ausgeschlossen; sie müssen vor Ort abgeholt werden."
+        }
+      ]
+    },
+    {
+      "document_id": "dev-kunst",
+      "filename": "kunstraum.pdf",
+      "split": "development",
+      "chunks": [
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr."
+        },
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 2,
+          "page_number": 1,
+          "text": "An einem Workshop im Kunstraum dürfen höchstens acht Personen teilnehmen."
+        },
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 3,
+          "page_number": 1,
+          "text": "Beim Schleifen im Kunstraum ist eine Schutzbrille vorgeschrieben."
+        }
+      ]
+    },
+    {
+      "document_id": "test-sport",
+      "filename": "sporthalle.pdf",
+      "split": "test",
+      "chunks": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Ein Badmintonplatz kostet 12 Euro pro Stunde und darf nur mit Buchung benutzt werden."
+        },
+        {
+          "document_id": "test-sport",
+          "chunk_id": 2,
+          "page_number": 1,
+          "text": "Eine Buchung kann bis 24 Stunden vor Beginn storniert werden."
+        },
+        {
+          "document_id": "test-sport",
+          "chunk_id": 3,
+          "page_number": 1,
+          "text": "Straßenschuhe sind auf den Spielflächen der Sporthalle nicht erlaubt."
+        }
+      ]
+    },
+    {
+      "document_id": "test-lesen",
+      "filename": "leseraum.pdf",
+      "split": "test",
+      "chunks": [
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Der Leseraum ist samstags von 9 bis 13 Uhr geöffnet."
+        },
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 2,
+          "page_number": 1,
+          "text": "Im Leseraum dürfen sich gleichzeitig höchstens sechs Personen aufhalten."
+        },
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 3,
+          "page_number": 1,
+          "text": "Mobiltelefone müssen im Leseraum lautlos gestellt werden."
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "D01",
+      "split": "development",
+      "family": "geraeteverleih",
+      "category": "answerable",
+      "query": "Was kostet eine Bohrmaschine und welche Ausgabebedingung gilt?",
+      "allowed_document_ids": [
+        "dev-verleih"
+      ],
+      "context": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Bohrmaschinen kosten 10 Euro pro Tag und werden nur mit Reservierung ausgegeben."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Was kostet eine Bohrmaschine?",
+          "expected_fact": "Eine Bohrmaschine kostet 10 Euro pro Tag.",
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "90 Euro pro Tag",
+            "kostenlos"
+          ],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "10 Euro pro Tag"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "10 Euro pro Tag"
+            }
+          ]
+        },
+        {
+          "question": "Welche Bedingung gilt?",
+          "expected_fact": "Die Ausgabe erfordert eine Reservierung.",
+          "necessary_conditions": [
+            "Reservierung erforderlich"
+          ],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "nur mit Reservierung"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f2",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "nur mit Reservierung"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D02",
+      "split": "development",
+      "family": "geraeteverleih",
+      "category": "unanswerable",
+      "query": "Wie lautet die Telefonnummer des Verleihs?",
+      "allowed_document_ids": [
+        "dev-verleih"
+      ],
+      "context": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Bohrmaschinen kosten 10 Euro pro Tag und werden nur mit Reservierung ausgegeben."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Wie lautet die Telefonnummer?",
+          "expected_fact": null,
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "Telefonnummer 12345"
+          ],
+          "corpus_evidence": [],
+          "expected_behavior": "abstain",
+          "facet_id": "f1",
+          "in_allowed_corpus": false,
+          "in_context": false,
+          "context_evidence": []
+        }
+      ]
+    },
+    {
+      "case_id": "D03",
+      "split": "development",
+      "family": "geraeteverleih",
+      "category": "multipart",
+      "query": "Wann muss ich reservieren und kann das Gerät versandt werden?",
+      "allowed_document_ids": [
+        "dev-verleih"
+      ],
+      "context": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 2,
+          "page_number": 1,
+          "text": "Reservierungen müssen zwei Werktage im Voraus eingehen. Zur Abholung ist ein Lichtbildausweis nötig."
+        },
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 3,
+          "page_number": 1,
+          "text": "Ein Versand der Geräte ist ausgeschlossen; sie müssen vor Ort abgeholt werden."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Wann muss reserviert werden?",
+          "expected_fact": "Die Reservierung muss zwei Werktage im Voraus eingehen.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "zwei Werktage im Voraus"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "zwei Werktage im Voraus"
+            }
+          ]
+        },
+        {
+          "question": "Kann das Gerät versandt werden?",
+          "expected_fact": "Ein Versand ist ausgeschlossen.",
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "Versand ist möglich"
+          ],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 3,
+              "page_number": 1,
+              "quote": "Ein Versand der Geräte ist ausgeschlossen"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f2",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 3,
+              "page_number": 1,
+              "quote": "Ein Versand der Geräte ist ausgeschlossen"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D04",
+      "split": "development",
+      "family": "geraeteverleih",
+      "category": "partial",
+      "query": "Welche Reservierungsfrist gilt und ist ein Versand möglich?",
+      "allowed_document_ids": [
+        "dev-verleih"
+      ],
+      "context": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 2,
+          "page_number": 1,
+          "text": "Reservierungen müssen zwei Werktage im Voraus eingehen. Zur Abholung ist ein Lichtbildausweis nötig."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Wann muss reserviert werden?",
+          "expected_fact": "Die Reservierung muss zwei Werktage im Voraus eingehen.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "zwei Werktage im Voraus"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "zwei Werktage im Voraus"
+            }
+          ]
+        },
+        {
+          "question": "Kann das Gerät versandt werden?",
+          "expected_fact": "Ein Versand ist ausgeschlossen.",
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "Versand ist möglich"
+          ],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 3,
+              "page_number": 1,
+              "quote": "Ein Versand der Geräte ist ausgeschlossen"
+            }
+          ],
+          "expected_behavior": "abstain",
+          "facet_id": "f2",
+          "in_allowed_corpus": true,
+          "in_context": false,
+          "context_evidence": []
+        }
+      ]
+    },
+    {
+      "case_id": "D05",
+      "split": "development",
+      "family": "geraeteverleih",
+      "category": "misleading",
+      "query": "Warum sind Bohrmaschinen im Verleih kostenlos?",
+      "allowed_document_ids": [
+        "dev-verleih"
+      ],
+      "context": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Bohrmaschinen kosten 10 Euro pro Tag und werden nur mit Reservierung ausgegeben."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Was kostet eine Bohrmaschine?",
+          "expected_fact": "Eine Bohrmaschine kostet 10 Euro pro Tag.",
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "90 Euro pro Tag",
+            "kostenlos"
+          ],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "10 Euro pro Tag"
+            }
+          ],
+          "expected_behavior": "correct_premise",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "dev-verleih",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "10 Euro pro Tag"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D06",
+      "split": "development",
+      "family": "kunstbesuch",
+      "category": "answerable",
+      "query": "Wann ist der Kunstraum geöffnet?",
+      "allowed_document_ids": [
+        "dev-kunst"
+      ],
+      "context": [
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr."
+        },
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 2,
+          "page_number": 1,
+          "text": "An einem Workshop im Kunstraum dürfen höchstens acht Personen teilnehmen."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Wann öffnet der Kunstraum?",
+          "expected_fact": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-kunst",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "dienstags von 14 bis 18 Uhr"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "dev-kunst",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "dienstags von 14 bis 18 Uhr"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D07",
+      "split": "development",
+      "family": "kunstbesuch",
+      "category": "partial",
+      "query": "Wann öffnet der Kunstraum und was kostet das Parken?",
+      "allowed_document_ids": [
+        "dev-kunst"
+      ],
+      "context": [
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Wann öffnet der Kunstraum?",
+          "expected_fact": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-kunst",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "dienstags von 14 bis 18 Uhr"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "dev-kunst",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "dienstags von 14 bis 18 Uhr"
+            }
+          ]
+        },
+        {
+          "question": "Was kostet das Parken?",
+          "expected_fact": null,
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "Parken kostet 4 Euro"
+          ],
+          "corpus_evidence": [],
+          "expected_behavior": "abstain",
+          "facet_id": "f2",
+          "in_allowed_corpus": false,
+          "in_context": false,
+          "context_evidence": []
+        }
+      ]
+    },
+    {
+      "case_id": "D08",
+      "split": "development",
+      "family": "kunstbesuch",
+      "category": "excluded",
+      "query": "Wie viele Personen dürfen am Kunstworkshop teilnehmen?",
+      "allowed_document_ids": [
+        "dev-verleih"
+      ],
+      "context": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Bohrmaschinen kosten 10 Euro pro Tag und werden nur mit Reservierung ausgegeben."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Wie viele Personen dürfen am Workshop teilnehmen?",
+          "expected_fact": "Höchstens acht Personen dürfen teilnehmen.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "dev-kunst",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "höchstens acht Personen"
+            }
+          ],
+          "expected_behavior": "abstain",
+          "facet_id": "f1",
+          "in_allowed_corpus": false,
+          "in_context": false,
+          "context_evidence": []
+        }
+      ]
+    },
+    {
+      "case_id": "T01",
+      "split": "test",
+      "family": "hallensport",
+      "category": "answerable",
+      "query": "Was kostet ein Badmintonplatz und welche Voraussetzung gilt?",
+      "allowed_document_ids": [
+        "test-sport"
+      ],
+      "context": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Ein Badmintonplatz kostet 12 Euro pro Stunde und darf nur mit Buchung benutzt werden."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Was kostet der Platz?",
+          "expected_fact": "Der Badmintonplatz kostet 12 Euro pro Stunde.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "12 Euro pro Stunde"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "12 Euro pro Stunde"
+            }
+          ]
+        },
+        {
+          "question": "Welche Voraussetzung gilt?",
+          "expected_fact": "Die Benutzung erfordert eine Buchung.",
+          "necessary_conditions": [
+            "Buchung erforderlich"
+          ],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "nur mit Buchung"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f2",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "nur mit Buchung"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "T02",
+      "split": "test",
+      "family": "hallensport",
+      "category": "unanswerable",
+      "query": "Wie lautet die Telefonnummer der Sporthalle?",
+      "allowed_document_ids": [
+        "test-sport"
+      ],
+      "context": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Ein Badmintonplatz kostet 12 Euro pro Stunde und darf nur mit Buchung benutzt werden."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Wie lautet die Telefonnummer?",
+          "expected_fact": null,
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [],
+          "expected_behavior": "abstain",
+          "facet_id": "f1",
+          "in_allowed_corpus": false,
+          "in_context": false,
+          "context_evidence": []
+        }
+      ]
+    },
+    {
+      "case_id": "T03",
+      "split": "test",
+      "family": "hallensport",
+      "category": "multipart",
+      "query": "Welche Stornierungsfrist gilt und sind Straßenschuhe erlaubt?",
+      "allowed_document_ids": [
+        "test-sport"
+      ],
+      "context": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 2,
+          "page_number": 1,
+          "text": "Eine Buchung kann bis 24 Stunden vor Beginn storniert werden."
+        },
+        {
+          "document_id": "test-sport",
+          "chunk_id": 3,
+          "page_number": 1,
+          "text": "Straßenschuhe sind auf den Spielflächen der Sporthalle nicht erlaubt."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Welche Stornierungsfrist gilt?",
+          "expected_fact": "Die Stornierung ist bis 24 Stunden vor Beginn möglich.",
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "48 Stunden"
+          ],
+          "corpus_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "24 Stunden vor Beginn"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "24 Stunden vor Beginn"
+            }
+          ]
+        },
+        {
+          "question": "Darf ich Straßenschuhe tragen?",
+          "expected_fact": "Straßenschuhe sind auf den Spielflächen nicht erlaubt.",
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "Straßenschuhe sind erlaubt"
+          ],
+          "corpus_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 3,
+              "page_number": 1,
+              "quote": "nicht erlaubt"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f2",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 3,
+              "page_number": 1,
+              "quote": "nicht erlaubt"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "T04",
+      "split": "test",
+      "family": "hallensport",
+      "category": "partial",
+      "query": "Was kostet ein Platz und wann kann ich stornieren?",
+      "allowed_document_ids": [
+        "test-sport"
+      ],
+      "context": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Ein Badmintonplatz kostet 12 Euro pro Stunde und darf nur mit Buchung benutzt werden."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Was kostet der Platz?",
+          "expected_fact": "Der Badmintonplatz kostet 12 Euro pro Stunde.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "12 Euro pro Stunde"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "12 Euro pro Stunde"
+            }
+          ]
+        },
+        {
+          "question": "Welche Stornierungsfrist gilt?",
+          "expected_fact": "Die Stornierung ist bis 24 Stunden vor Beginn möglich.",
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "48 Stunden"
+          ],
+          "corpus_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "24 Stunden vor Beginn"
+            }
+          ],
+          "expected_behavior": "abstain",
+          "facet_id": "f2",
+          "in_allowed_corpus": true,
+          "in_context": false,
+          "context_evidence": []
+        }
+      ]
+    },
+    {
+      "case_id": "T05",
+      "split": "test",
+      "family": "hallensport",
+      "category": "misleading",
+      "query": "Warum darf ich auf den Spielflächen Straßenschuhe tragen?",
+      "allowed_document_ids": [
+        "test-sport"
+      ],
+      "context": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 3,
+          "page_number": 1,
+          "text": "Straßenschuhe sind auf den Spielflächen der Sporthalle nicht erlaubt."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Darf ich Straßenschuhe tragen?",
+          "expected_fact": "Straßenschuhe sind auf den Spielflächen nicht erlaubt.",
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "Straßenschuhe sind erlaubt"
+          ],
+          "corpus_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 3,
+              "page_number": 1,
+              "quote": "nicht erlaubt"
+            }
+          ],
+          "expected_behavior": "correct_premise",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "test-sport",
+              "chunk_id": 3,
+              "page_number": 1,
+              "quote": "nicht erlaubt"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "T06",
+      "split": "test",
+      "family": "lesebetrieb",
+      "category": "answerable",
+      "query": "Wann ist der Leseraum geöffnet?",
+      "allowed_document_ids": [
+        "test-lesen"
+      ],
+      "context": [
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 1,
+          "page_number": 1,
+          "text": "Der Leseraum ist samstags von 9 bis 13 Uhr geöffnet."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Wann öffnet der Leseraum?",
+          "expected_fact": "Der Leseraum öffnet samstags von 9 bis 13 Uhr.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "test-lesen",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "samstags von 9 bis 13 Uhr"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "test-lesen",
+              "chunk_id": 1,
+              "page_number": 1,
+              "quote": "samstags von 9 bis 13 Uhr"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "T07",
+      "split": "test",
+      "family": "lesebetrieb",
+      "category": "partial",
+      "query": "Wie viele Personen dürfen hinein und wie teuer sind Snacks?",
+      "allowed_document_ids": [
+        "test-lesen"
+      ],
+      "context": [
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 2,
+          "page_number": 1,
+          "text": "Im Leseraum dürfen sich gleichzeitig höchstens sechs Personen aufhalten."
+        }
+      ],
+      "facets": [
+        {
+          "question": "Wie viele Personen dürfen gleichzeitig hinein?",
+          "expected_fact": "Höchstens sechs Personen dürfen gleichzeitig hinein.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "test-lesen",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "höchstens sechs Personen"
+            }
+          ],
+          "expected_behavior": "answer",
+          "facet_id": "f1",
+          "in_allowed_corpus": true,
+          "in_context": true,
+          "context_evidence": [
+            {
+              "document_id": "test-lesen",
+              "chunk_id": 2,
+              "page_number": 1,
+              "quote": "höchstens sechs Personen"
+            }
+          ]
+        },
+        {
+          "question": "Was kosten Snacks?",
+          "expected_fact": null,
+          "necessary_conditions": [],
+          "forbidden_claims": [
+            "Snacks sind kostenlos"
+          ],
+          "corpus_evidence": [],
+          "expected_behavior": "abstain",
+          "facet_id": "f2",
+          "in_allowed_corpus": false,
+          "in_context": false,
+          "context_evidence": []
+        }
+      ]
+    },
+    {
+      "case_id": "T08",
+      "split": "test",
+      "family": "lesebetrieb",
+      "category": "empty_selection",
+      "query": "Wie müssen Mobiltelefone im Leseraum eingestellt sein?",
+      "allowed_document_ids": [],
+      "context": [],
+      "facets": [
+        {
+          "question": "Wie müssen Mobiltelefone eingestellt sein?",
+          "expected_fact": "Mobiltelefone müssen lautlos gestellt werden.",
+          "necessary_conditions": [],
+          "forbidden_claims": [],
+          "corpus_evidence": [
+            {
+              "document_id": "test-lesen",
+              "chunk_id": 3,
+              "page_number": 1,
+              "quote": "lautlos gestellt"
+            }
+          ],
+          "expected_behavior": "abstain",
+          "facet_id": "f1",
+          "in_allowed_corpus": false,
+          "in_context": false,
+          "context_evidence": []
+        }
+      ]
+    }
+  ]
+}

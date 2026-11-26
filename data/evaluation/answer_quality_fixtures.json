@@ -1,0 +1,753 @@
+{
+  "version": 1,
+  "description": "32 ausdrücklich synthetische Antwort-Snapshots, keine GPT-4.1-mini-Ausgaben und keine menschlichen Bewertungen. intended_good/faulty sind Testdesign-Merkmale, keine semantischen Messergebnisse.",
+  "snapshots": [
+    {
+      "snapshot_id": "D01-good",
+      "case_id": "D01",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Eine Bohrmaschine kostet 10 Euro pro Tag. Die Ausgabe erfordert eine Reservierung.",
+      "sources": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Eine Bohrmaschine kostet 10 Euro pro Tag.",
+          "cited_source_indices": [
+            0
+          ]
+        },
+        {
+          "claim_id": "c2",
+          "text": "Die Ausgabe erfordert eine Reservierung.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D01-faulty",
+      "case_id": "D01",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "wrong_number",
+      "answer": "Eine Bohrmaschine kostet 90 Euro pro Tag.",
+      "sources": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Eine Bohrmaschine kostet 90 Euro pro Tag.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D02-good",
+      "case_id": "D02",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Zur Teilfrage 'Wie lautet die Telefonnummer?' wurde die Information im verfügbaren Kontext nicht gefunden.",
+      "sources": [],
+      "claims": []
+    },
+    {
+      "snapshot_id": "D02-faulty",
+      "case_id": "D02",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "unsupported_phone",
+      "answer": "Die Telefonnummer lautet 12345.",
+      "sources": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Die Telefonnummer lautet 12345.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D03-good",
+      "case_id": "D03",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Die Reservierung muss zwei Werktage im Voraus eingehen. Ein Versand ist ausgeschlossen.",
+      "sources": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 2,
+          "page_number": 1
+        },
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 3,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Die Reservierung muss zwei Werktage im Voraus eingehen.",
+          "cited_source_indices": [
+            0
+          ]
+        },
+        {
+          "claim_id": "c2",
+          "text": "Ein Versand ist ausgeschlossen.",
+          "cited_source_indices": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D03-faulty",
+      "case_id": "D03",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "missing_subanswer",
+      "answer": "Die Reservierung muss zwei Werktage im Voraus eingehen.",
+      "sources": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 2,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Die Reservierung muss zwei Werktage im Voraus eingehen.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D04-good",
+      "case_id": "D04",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Die Reservierung muss zwei Werktage im Voraus eingehen. Zur Teilfrage 'Kann das Gerät versandt werden?' wurde die Information im verfügbaren Kontext nicht gefunden.",
+      "sources": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 2,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Die Reservierung muss zwei Werktage im Voraus eingehen.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D04-faulty",
+      "case_id": "D04",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "source_not_in_context",
+      "answer": "Ein Versand ist möglich.",
+      "sources": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 3,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Ein Versand ist möglich.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D05-good",
+      "case_id": "D05",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Eine Bohrmaschine kostet 10 Euro pro Tag.",
+      "sources": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Eine Bohrmaschine kostet 10 Euro pro Tag.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D05-faulty",
+      "case_id": "D05",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "negation_error",
+      "answer": "Bohrmaschinen sind kostenlos.",
+      "sources": [
+        {
+          "document_id": "dev-verleih",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Bohrmaschinen sind kostenlos.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D06-good",
+      "case_id": "D06",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr.",
+      "sources": [
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D06-faulty",
+      "case_id": "D06",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "valid_but_irrelevant_citation",
+      "answer": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr.",
+      "sources": [
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 2,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D07-good",
+      "case_id": "D07",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr. Zur Teilfrage 'Was kostet das Parken?' wurde die Information im verfügbaren Kontext nicht gefunden.",
+      "sources": [
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D07-faulty",
+      "case_id": "D07",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "unsupported_addition",
+      "answer": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr. Parken kostet 4 Euro.",
+      "sources": [
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Der Kunstraum öffnet dienstags von 14 bis 18 Uhr.",
+          "cited_source_indices": [
+            0
+          ]
+        },
+        {
+          "claim_id": "c2",
+          "text": "Parken kostet 4 Euro.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "D08-good",
+      "case_id": "D08",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Zur Teilfrage 'Wie viele Personen dürfen am Workshop teilnehmen?' wurde die Information im verfügbaren Kontext nicht gefunden.",
+      "sources": [],
+      "claims": []
+    },
+    {
+      "snapshot_id": "D08-faulty",
+      "case_id": "D08",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "excluded_document_source",
+      "answer": "Höchstens acht Personen dürfen teilnehmen.",
+      "sources": [
+        {
+          "document_id": "dev-kunst",
+          "chunk_id": 2,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Höchstens acht Personen dürfen teilnehmen.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T01-good",
+      "case_id": "T01",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Der Badmintonplatz kostet 12 Euro pro Stunde. Die Benutzung erfordert eine Buchung.",
+      "sources": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Der Badmintonplatz kostet 12 Euro pro Stunde.",
+          "cited_source_indices": [
+            0
+          ]
+        },
+        {
+          "claim_id": "c2",
+          "text": "Die Benutzung erfordert eine Buchung.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T01-faulty",
+      "case_id": "T01",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "missing_sources",
+      "answer": "Der Badmintonplatz kostet 12 Euro pro Stunde. Die Benutzung erfordert eine Buchung.",
+      "sources": [],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Der Badmintonplatz kostet 12 Euro pro Stunde.",
+          "cited_source_indices": []
+        },
+        {
+          "claim_id": "c2",
+          "text": "Die Benutzung erfordert eine Buchung.",
+          "cited_source_indices": []
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T02-good",
+      "case_id": "T02",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Zur Teilfrage 'Wie lautet die Telefonnummer?' wurde die Information im verfügbaren Kontext nicht gefunden.",
+      "sources": [],
+      "claims": []
+    },
+    {
+      "snapshot_id": "T02-faulty",
+      "case_id": "T02",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "invented_source",
+      "answer": "Die Telefonnummer lautet 55500.",
+      "sources": [
+        {
+          "document_id": "erfunden",
+          "chunk_id": 99,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Die Telefonnummer lautet 55500.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T03-good",
+      "case_id": "T03",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Die Stornierung ist bis 24 Stunden vor Beginn möglich. Straßenschuhe sind auf den Spielflächen nicht erlaubt.",
+      "sources": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 2,
+          "page_number": 1
+        },
+        {
+          "document_id": "test-sport",
+          "chunk_id": 3,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Die Stornierung ist bis 24 Stunden vor Beginn möglich.",
+          "cited_source_indices": [
+            0
+          ]
+        },
+        {
+          "claim_id": "c2",
+          "text": "Straßenschuhe sind auf den Spielflächen nicht erlaubt.",
+          "cited_source_indices": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T03-faulty",
+      "case_id": "T03",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "wrong_number_and_missing_part",
+      "answer": "Die Stornierungsfrist beträgt 48 Stunden.",
+      "sources": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 2,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Die Stornierungsfrist beträgt 48 Stunden.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T04-good",
+      "case_id": "T04",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Der Badmintonplatz kostet 12 Euro pro Stunde. Zur Teilfrage 'Welche Stornierungsfrist gilt?' wurde die Information im verfügbaren Kontext nicht gefunden.",
+      "sources": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Der Badmintonplatz kostet 12 Euro pro Stunde.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T04-faulty",
+      "case_id": "T04",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "false_full_abstention",
+      "answer": "Die Information wurde im Dokument nicht gefunden.",
+      "sources": [],
+      "claims": []
+    },
+    {
+      "snapshot_id": "T05-good",
+      "case_id": "T05",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Straßenschuhe sind auf den Spielflächen nicht erlaubt.",
+      "sources": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 3,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Straßenschuhe sind auf den Spielflächen nicht erlaubt.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T05-faulty",
+      "case_id": "T05",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "negation_error",
+      "answer": "Straßenschuhe sind auf den Spielflächen erlaubt.",
+      "sources": [
+        {
+          "document_id": "test-sport",
+          "chunk_id": 3,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Straßenschuhe sind auf den Spielflächen erlaubt.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T06-good",
+      "case_id": "T06",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Der Leseraum öffnet samstags von 9 bis 13 Uhr.",
+      "sources": [
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 1,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Der Leseraum öffnet samstags von 9 bis 13 Uhr.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T06-faulty",
+      "case_id": "T06",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "wrong_page",
+      "answer": "Der Leseraum öffnet samstags von 9 bis 13 Uhr.",
+      "sources": [
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 1,
+          "page_number": 99
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Der Leseraum öffnet samstags von 9 bis 13 Uhr.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T07-good",
+      "case_id": "T07",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Höchstens sechs Personen dürfen gleichzeitig hinein. Zur Teilfrage 'Was kosten Snacks?' wurde die Information im verfügbaren Kontext nicht gefunden.",
+      "sources": [
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 2,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Höchstens sechs Personen dürfen gleichzeitig hinein.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T07-faulty",
+      "case_id": "T07",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "unsupported_addition",
+      "answer": "Höchstens sechs Personen dürfen gleichzeitig hinein. Snacks sind kostenlos.",
+      "sources": [
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 2,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Höchstens sechs Personen dürfen gleichzeitig hinein.",
+          "cited_source_indices": [
+            0
+          ]
+        },
+        {
+          "claim_id": "c2",
+          "text": "Snacks sind kostenlos.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "snapshot_id": "T08-good",
+      "case_id": "T08",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_good",
+      "mutation": "designed_reference_response_not_human_rating",
+      "answer": "Zur Teilfrage 'Wie müssen Mobiltelefone eingestellt sein?' wurde die Information im verfügbaren Kontext nicht gefunden.",
+      "sources": [],
+      "claims": []
+    },
+    {
+      "snapshot_id": "T08-faulty",
+      "case_id": "T08",
+      "provenance": "synthetic_fixture",
+      "fixture_kind": "intended_faulty",
+      "mutation": "empty_selection_source",
+      "answer": "Mobiltelefone müssen lautlos gestellt werden.",
+      "sources": [
+        {
+          "document_id": "test-lesen",
+          "chunk_id": 3,
+          "page_number": 1
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "c1",
+          "text": "Mobiltelefone müssen lautlos gestellt werden.",
+          "cited_source_indices": [
+            0
+          ]
+        }
+      ]
+    }
+  ]
+}

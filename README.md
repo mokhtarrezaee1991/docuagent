@@ -1,893 +1,333 @@
-# DocuAgent – AI-Powered Document Assistant
+# DocuAgent
 
-**Status: 🚧 Work in Progress | Active Development**
+A local PDF question-answering prototype built with FastAPI, Streamlit, SQLite, LangGraph and multilingual embeddings.
 
-DocuAgent is an AI-powered document assistant built with Python, FastAPI, Streamlit, and Retrieval-Augmented Generation (RAG).
+**Status:** work in progress; local single-user application. **Validation:** 665 automated tests passed on 25 November 2026. This is a regression-test result, not model accuracy.
 
-The application allows users to upload multiple PDF documents, ask questions in natural language, and receive AI-generated answers with references to the original documents.
+## Project Overview
 
-This project is being developed as a practical portfolio project focused on **Generative AI, semantic search, document processing, and AI application development**.
+DocuAgent indexes multiple PDFs, retrieves passages within an explicit document scope, and generates answers with document, page and chunk references using OpenAI GPT-4.1-mini. Document embeddings are computed locally and persisted in SQLite.
 
-## Current Features
+The project explores the engineering boundaries of a small RAG system: input validation, reusable embeddings, deterministic orchestration, source constraints, offline evaluation and controlled paid-model experiments. Semantic search remains the default. Experiments that have not demonstrated independent value remain outside the application workflow.
 
-- **Multi-PDF Upload:** Upload and index multiple PDF documents.
-- **PDF Text Extraction:** Extract text and preserve page information.
-- **Token-Based Chunking:** Split documents into manageable text sections with overlap.
-- **Semantic Search:** Find relevant document sections using multilingual sentence embeddings and cosine similarity.
-- **Search Policy and LangGraph:** Deterministic search planning, explicit document scopes, and generation or abstention.
-- **Retrieval-Augmented Generation (RAG):** Generate answers using OpenAI GPT-4.1-mini and retrieved document context.
-- **Source References:** Display document names, page numbers, and chunk references.
-- **Interactive Interface:** Ask questions through a Streamlit chat application.
-- **Document Management:** List and remove indexed documents.
-- **Automated Tests:** Unit and API tests for core functionality.
-- **Offline Experiments (not production-integrated):** Conservative retrieval diagnostics, one-retry query experiments, and MMR candidate-selection evaluation.
+See the [public evaluation summary](docs/public_evaluation_summary_20261125.md) for measured results and their limitations, and the [publication selection](docs/publication_selection_8a_20261125.md) for the proposed documentation/source boundary.
+
+## Key Features
+
+- Multi-PDF upload, document listing and individual deletion, with unique IDs even for identical filenames.
+- PDF content-type, signature and parser validation; a 10 MiB upload limit.
+- Per-page token-aware chunking with overlap, accounting for the embedding model's token limit and special tokens.
+- Local multilingual embeddings reused across questions and restored from SQLite after restart.
+- Semantic retrieval and optional BM25/RRF hybrid modes, including German Snowball normalization.
+- Explicit document selection in the API and UI; an empty selection never becomes a global search.
+- A deterministic LangGraph workflow for search planning, retrieval, generation or local abstention.
+- Structured answers and technical validation of document/page/chunk source references.
+- Offline retrieval experiments, synthetic answer fixtures and integrity-bound answer reviews.
+
+The application has no autonomous LLM router, runtime LLM judge, automatic query rewriting, productive retry, or productive MMR selection.
+
+## System Architecture
+
+The diagram shows the integrated application only. Experimental quality diagnostics, retry, MMR and automatic retrieval-mode selection are excluded.
+
+```mermaid
+flowchart TD
+    UI["Streamlit UI"] -->|PDF uploads and questions| API["FastAPI"]
+
+    subgraph Ingestion["PDF ingestion"]
+        PDF["Validate PDF type, structure and size"] --> Extract["PyMuPDF text extraction"]
+        Extract --> Chunk["Per-page token-aware chunking"]
+        Chunk --> DocEmb["Compute document embeddings locally"]
+    end
+
+    API --> PDF
+    Model["Local multilingual embedding model"] --> DocEmb
+    DocEmb --> DB[("SQLite: metadata, chunks and embeddings")]
+    DocEmb -->|Add prepared chunks| Index["In-memory document collection"]
+    DB -->|Restore prepared embeddings on startup| Index
+
+    subgraph QA["LangGraph document-question workflow"]
+        Policy["select_search: deterministic Search Policy"] --> Retrieve["retrieve: scoped Semantic, Hybrid or Hybrid-DE search"]
+        Retrieve --> Hits{"Any retrieved chunks?"}
+        Hits -->|No| Abstain["Local abstention"]
+        Hits -->|Yes| Generate["generate: OpenAI answer generation"]
+        Generate --> Validate["Validate source references against supplied context"]
+    end
+
+    API -->|query, top_k, optional document_ids| Policy
+    Index --> Retrieve
+    Model -->|Embed the query locally| Retrieve
+    Validate --> Result["Answer or model abstention with sources"]
+    Abstain --> Result
+    Result --> API
+    API -->|Display answer and document sources| UI
+```
+
+SQLite also persists successful additions and deletions. Original PDF files are not stored by this persistence layer. Invalid source references are rejected rather than returned as valid citations.
+
+The graph is a fixed workflow, not autonomous tool reasoning. Nonempty retrieval results allow generation but do not establish that the question is answerable.
 
 ## Technology Stack
 
-| Category             | Technologies          |
-| -------------------- | --------------------- |
-| Programming Language | Python                |
-| Backend              | FastAPI               |
-| Frontend             | Streamlit             |
-| AI / LLM             | OpenAI GPT-4.1-mini   |
-| Embeddings           | Sentence Transformers |
-| Semantic Search      | Cosine Similarity     |
-| Retrieval alternatives | BM25, RRF, Snowball |
-| Workflow orchestration | LangGraph           |
-| Local persistence    | SQLite                |
-| PDF Processing       | PyMuPDF               |
-| Testing              | pytest                |
-| Version Control      | Git & GitHub          |
-
-## How It Works
-
-1. **Document Upload:** Users upload PDF files through Streamlit.
-2. **Text Extraction:** The backend extracts text and page information.
-3. **Chunking:** Text is divided into token-based sections.
-4. **Embedding Generation:** A local Sentence Transformers model converts text chunks into numerical vectors.
-5. **Search Planning and Retrieval:** LangGraph applies the search policy and retrieves chunks using the configured search mode.
-6. **Answer Generation:** GPT-4.1-mini generates an answer using the retrieved context.
-7. **Source Attribution:** The application displays references to the original documents.
-
-## Current Architecture
-
-Produktiver Single-Pass-Ablauf; die isolierten Experimente aus Phase 6b–6e sind
-keine zusätzlichen Nodes und verändern diesen Anfragepfad nicht:
-
-```text
-                  Streamlit UI
-                       |
-                  FastAPI Backend
-                       |
-              PDF Document Processing
-                       |
-               Token-Based Chunking
-                       |
-              Local Embedding Model
-                       |
-          LangGraph: select_search
-                       |
-                    retrieve
-                       |
-          No hits: abstain (local)
-          Hits: generate (GPT-4.1-mini)
-                       |
-              Answer + PDF Sources
-```
-
-Separat ausführbare Offline-Skripte prüfen Strukturdiagnose, Query-Retry und MMR.
-Es gibt keine produktive Qualitätsentscheidung, Query-Reformulierung, erneute
-Suche oder MMR-Auswahl im FastAPI-/Streamlit-Anfragepfad.
-
-### LangGraph und Search Policy: Phase 3a–3e
-
-Der Graph in `backend/app/workflows/document_qa.py` führt
-`select_search → retrieve → generate/abstain` aus. Jede Anfrage hat eigenen State.
-Der neue Node verwendet `select_search()` aus `search_policy.py` und aktuelle
-Dokumentmetadaten. Der validierte, unveränderliche `SearchPlan` trennt Suchmodus
-und Dokumentauswahl und hält die Entscheidung als `routing_reason` fest.
-`retrieve` verwendet vorhandene Dokument-Embeddings. Ohne Treffer folgt eine
-feste Verzichtsantwort mit `sources: []` ohne Generatoraufruf. Mit Treffern wird
-der vorhandene RAG-Service höchstens einmal aufgerufen. Er darf weiterhin
-verzichten, wenn die Information im Kontext fehlt; Treffer beweisen keine
-Beantwortbarkeit. Quellen müssen auf tatsächlich übergebene Abschnitte verweisen,
-was allein noch keine inhaltliche Richtigkeit garantiert.
-
-**Noch kein autonomer LLM-Router:** Die Policy verarbeitet ausschließlich
-explizite Metadaten, keine Dokumenttexte oder heuristisch erkannten Wörter/Zahlen.
-Es gibt weder zusätzliche LLM-Klassifikation noch selbständige Werkzeugplanung
-oder Routing-Wiederholungen. Der aktuelle Index wird je Anfrage aufgelöst;
-Hinzufügen und Löschen erfordern keine neue Graph-Kompilierung.
-
-| Suchmodus | Verfahren |
+| Area | Implementation |
 | --- | --- |
-| `semantic` | Lokale mehrsprachige Embeddings und Kosinus-Ähnlichkeit; Standard |
-| `hybrid` | Semantic + BM25 ohne Stemming, gleichgewichtete RRF mit Konstante 60 |
-| `hybrid_de` | Hybrid mit identischer deutscher Snowball-Normalisierung für Fragen und Chunks |
+| Runtime | Python; tested locally with Python 3.11.8 |
+| API | FastAPI, Uvicorn, Pydantic |
+| UI | Streamlit, httpx |
+| PDF processing | PyMuPDF |
+| Embeddings | Sentence Transformers, PyTorch; CPU model loading |
+| Embedding model | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` |
+| Retrieval | Cosine similarity; rank-bm25; RRF; snowballstemmer |
+| Workflow | LangGraph |
+| Answer generation | Official OpenAI Python SDK; `gpt-4.1-mini` |
+| Persistence | Local SQLite through Python's standard library |
+| Testing | pytest, httpx TestClient and local SDK/HTTP mocks |
 
-Die isolierte Policy verwendet ohne Vorgabe `semantic`. FastAPI übergibt den
-serverseitig konfigurierten `DOCUAGENT_RETRIEVAL_MODE` ausdrücklich, damit eine
-bestehende Hybrid-Konfiguration nicht auf Semantic zurückgesetzt wird.
+## Retrieval and Generation Workflow
 
-**Öffentliche API, Phase 4a:** `/documents/ask` unterstützt `query`, `top_k`
-(Standard 3) und optional `document_ids` als Liste aktueller Dokument-IDs.
-Bestehende Anfragen ohne Auswahl bleiben global; auch `null` bedeutet global.
-`[]` wählt ausdrücklich keine Dokumente. Doppelte IDs zählen einmal. Ungültige,
-unbekannte und gelöschte IDs werden mit HTTP 422 abgewiesen, ohne interne
-Fehlerdetails auszugeben. Bei leerem Index hat HTTP 409 Vorrang vor der Prüfung
-inhaltlich unbekannter IDs; strukturell ungültige Eingaben bleiben HTTP 422.
-IDs können über `GET /documents` ermittelt werden. Beispiel:
+1. Upload a PDF. The backend reads at most the size limit plus one byte and validates the file before extraction.
+2. Extract page text and create chunks within the embedding model's token budget. Page references remain attached to each chunk.
+3. Embed document chunks once, save metadata/text/vectors in SQLite and make them available in the current index.
+4. Validate the question and document selection. Search only within the selected documents, before ranking and top-k.
+5. Execute one configured retrieval mode. The local query embedding is new; document embeddings are reused.
+6. If there are no hits, return a local abstention. Otherwise pass only the question and retrieved passages to the existing answer generator.
+7. Validate returned source references against that exact context. A model can also abstain when nonempty context is insufficient.
+
+### Retrieval modes
+
+| Mode | Ranking |
+| --- | --- |
+| `semantic` | Multilingual embeddings and cosine similarity; default |
+| `hybrid` | Semantic + BM25, equal-weight Reciprocal Rank Fusion with constant 60 |
+| `hybrid_de` | Hybrid with German Snowball normalization applied to questions and document tokens |
+
+Set the mode through backend configuration. The public question endpoint does not expose a `mode` field.
+
+### API behavior
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /health` | Health check |
+| `POST /documents` | Add a PDF without replacing previous documents |
+| `GET /documents` | List indexed document metadata |
+| `DELETE /documents/{document_id}` | Delete a document and its stored chunks |
+| `POST /documents/search` | Retrieval without OpenAI answer generation |
+| `POST /documents/ask` | Answer a question through the LangGraph workflow |
+| `POST /documents/upload` | Extract page text without indexing |
+| `POST /documents/index` | Compatibility endpoint that replaces the entire index after successful preparation |
+
+Streamlit uses the append endpoint for multi-document uploads. For `/documents/ask`, the request is:
 
 ```json
-{"query": "Wie lang muss ein Passwort sein?", "top_k": 3, "document_ids": ["aktuelle-dokument-id"]}
-```
-
-Die Antwort bleibt `answer` und `sources`. `mode` und Dateinamen sind keine
-öffentlichen Suchoptionen. Streamlit bietet seit Phase 4b den Suchbereich
-„Alle Dokumente“ als Standard und alternativ „Einzelne Dokumente“ mit
-Mehrfachauswahl. Die Beschriftung zeigt Dateiname und vollständige Dokument-ID,
-auch bei gleichen Dateinamen. Intern werden nur IDs an `/documents/ask` gesendet.
-Eine leere Einzelauswahl sendet `document_ids: []`, niemals eine globale Ersatzsuche.
-Nach Upload oder Löschung wird die Dokumentliste neu geladen; entfernte ausgewählte
-IDs werden sichtbar gemeldet. Bei Änderungen aus anderen Sitzungen die Liste
-manuell aktualisieren. Nach HTTP 422 wird das Fragenstellen bis zur Aktualisierung
-gesperrt, damit ungültige Auswahlen nicht unbemerkt wiederholt werden.
-Andere zusätzliche JSON-Felder werden weiterhin ignoriert. HTTP 409 (kein Index),
-422 (ungültige Eingaben), 503 (fehlender Schlüssel) und 502 (Generierungsfehler)
-bleiben erhalten. Auch leerer Suchkontext umgeht die API-Schlüsselprüfung nicht;
-mit konfiguriertem Schlüssel benötigt der lokale Abstain-Pfad keinen API-Aufruf.
-
-`DocumentCollection.search(..., document_ids=[...])` filtert vor Ranking und
-Top-k. `None` durchsucht alle Dokumente, `[]` ausdrücklich keines. Doppelte IDs
-zählen einmal. Unbekannte oder gelöschte IDs führen zu `ValueError`; es gibt keine
-teilweise oder globale Ersatzsuche. Gefilterte Hybrid-Suchen bauen ihren
-BM25-Index ausschließlich aus dem Teilbestand auf, ohne globalen BM25-Cache.
-Die Policy ordnet explizite Dateinamen nur exakt, case-sensitiv und eindeutig zu;
-bei gleichen Namen verlangt sie eine ID. Die Suche validiert IDs bei der
-Ausführung erneut, falls seit der Planung Dokumente gelöscht wurden.
-
-### Offline-Evaluation der Search Policy
-
-`backend/scripts/evaluate_search_policy.py` verwendet
-[18 unabhängige Routing-Fixtures](data/evaluation/search_policy_cases.json)
-mit vier synthetischen Dokumenten und fest vorgegebenen Testvektoren. Es führt
-die echte Kette **Search Policy → DocumentCollection.search()** aus, keinen
-Replay eines vorbereiteten Top-3-Kontexts. Fälle umfassen globale Suche,
-einzelne/mehrere/doppelte IDs, eindeutige und mehrdeutige Dateinamen, leere
-Auswahl, unbekannte/gelöschte IDs, ungültige Modi, konkurrierende Auswahlparameter
-und alle drei gültigen Suchmodi.
-
-Der [ausgeführte JSON-Bericht](docs/search_policy_offline_20261122_114757_420278.json)
-enthält Datensatz-SHA-256, Paketversionen, Pläne, Treffer, Scores und Laufzeiten.
-Er ergibt **18/18 korrekte Routing-Entscheidungen**, einschließlich **6/6 korrekt
-abgewiesener Fehlerfälle**. Relevanzmetriken beziehen sich auf neun Fälle;
-Fehlerfälle und explizite Leerauswahlen zählen nicht als Relevanzfragen.
-
-| Kennzahl | Globale Semantic-Baseline | Policy + Retrieval |
-| --- | ---: | ---: |
-| Hit Rate@1 | 44,44 % | 100 % |
-| Hit Rate@3 | 100 % | 100 % |
-| MRR@3 | 0,629630 | 1,000000 |
-| Treffer außerhalb des Sollbereichs, 12 gültige Routing-Fälle | 23 von 36 | 0 von 14 |
-| Summierte Laufzeit der jeweiligen Pfade | 0,88 ms | 2,35 ms |
-
-Gesamtlaufzeit des aufgezeichneten Laufs: rund **12,37 ms**. **0 LLM-, 0 OpenAI-
-und 0 externe API-Aufrufe.** Laufzeiten schwanken und sind keine belastbaren
-Performance-Benchmarks; die sonstigen Ergebnisse sind bei identischen Daten
-und Paketversionen reproduzierbar.
-
-Aus `backend` erneut ausführen:
-
-```powershell
-.\.venv\Scripts\python.exe scripts/evaluate_search_policy.py
-```
-
-Jeder Lauf erstellt einen neuen Zeitstempel-Bericht unter `docs/`; vorhandene
-Ausgabedateien werden abgewiesen. Optional ist `--output` mit einem neuen Pfad
-möglich. Kein Modell-Download, OpenAI-Schlüssel oder `.env`-Zugriff ist nötig.
-Die bestehende Legacy-vs-LangGraph-Antwort-Evaluation bleibt separat.
-
-**Grenzen:** Der Top-1-Vorteil belegt die Funktion expliziter Dokumentauswahl in
-diesen kontrollierten Fixtures. Manuell festgelegte Vektoren und wiederkehrende
-Fragen beweisen keine bessere echte Embedding-Qualität, autonome Werkzeugwahl
-oder bessere LLM-Antworten. Die Baseline ignoriert Auswahlvorgaben absichtlich;
-ihre bereichsfremden Treffer sind kein Sicherheitsfehler. Suchmodus und Bereich
-können gleichzeitig variieren. MRR@3 ist auf drei Treffer begrenzt, anders als
-die bestehende Retrieval-Evaluation über die vollständige Rangliste. PDFs,
-Extraktion, SQLite, FastAPI und der vollständige Graph werden nicht End-to-End
-evaluiert.
-
-### Isolierte Retrieval-Modus-Policy: Phase 5b
-
-`backend/app/workflows/retrieval_mode_policy.py` stellt die deterministische
-Schnittstelle `choose_mode(query, *, fallback_mode, enabled=False)` bereit.
-Das validierte, unveränderliche Ergebnis enthält `mode`, `routing_reason`
-und `used_fallback`. Erlaubt sind nur `semantic`, `hybrid` und `hybrid_de`.
-
-| Einstellung | Verhalten | `routing_reason` |
-| --- | --- | --- |
-| `enabled=False` (Standard) | Konfigurierten Fallback unverändert beibehalten | `automation_disabled` |
-| `enabled=True`, keine validierte Regel vorhanden | Ebenfalls Fallback beibehalten | `no_validated_rule` |
-
-**Die Policy trifft noch keine automatische Modusentscheidung und ist nicht in
-den produktiven LangGraph-Workflow oder FastAPI eingebunden.** Es gibt keine
-Keyword-Heuristik und keinen LLM-Router. `fallback_mode` bezeichnet Konfiguration;
-eine explizite Modusvorgabe müsste ein späterer Aufrufer vor der optionalen
-Automatik behandeln. Die bestehende Search Policy, Dokumentauswahl und
-serverseitige Moduskonfiguration bleiben unverändert.
-
-### Retrieval-Modus-Evaluation: feste Vektoren und lokales Modell
-
-`backend/scripts/evaluate_retrieval_modes.py` vergleicht die drei festen Modi
-und die Policy über die tatsächliche `DocumentCollection.search()`-Schnittstelle.
-Der neue Datensatz [retrieval_mode_cases.json](data/evaluation/retrieval_mode_cases.json)
-enthält sechs synthetische Dokumente mit zwölf Chunks und zwölf Fragen:
-je **drei Dokumente und sechs Fragen für Entwicklung und Test**. Dokument-IDs
-und Fragefamilien sind zwischen den Splits getrennt. Die bisherigen 20
-Retrieval-Fragen werden nicht als unabhängiger Testsatz wiederverwendet.
-Alle Varianten eines Laufs erhalten identische Chunks, Dokument-Embeddings,
-Dokumentauswahl, Relevanzreferenzen und `top_k=3`. Referenzen verlangen passende
-Dokument-ID, Chunk, Seite und Textbeleg. Gleich gute Modi werden als Gleichstand
-ausgewiesen; nachträglich beste Modi sind nur Diagnostik, keine Router-Eingabe.
-
-**Phase 5b: feste synthetische Vektoren.** Der Standardmodus `fixtures` verwendet
-manuell vorgegebene Dokument- und Fragevektoren. Er prüft reproduzierbar
-Fallback-Verhalten, Metriken und Filterung, nicht die Qualität eines echten Modells.
-Der [Fixture-Bericht](docs/retrieval_modes_offline_20261122_184747_406665.json) ergibt:
-
-| Split | Fester Modus | Hit Rate@1 | Hit Rate@3 | MRR@3 |
-| --- | --- | ---: | ---: | ---: |
-| Entwicklung | semantic | 50 % | 100 % | 0,7500 |
-| Entwicklung | hybrid | 100 % | 100 % | 1,0000 |
-| Entwicklung | hybrid_de | 100 % | 100 % | 1,0000 |
-| Test | semantic | 50 % | 100 % | 0,7500 |
-| Test | hybrid | 66,67 % | 100 % | 0,8333 |
-| Test | hybrid_de | 66,67 % | 100 % | 0,8333 |
-
-Deaktivierte und aktivierte Policy ohne Regel liefern für jeden Fallback exakt
-dessen Treffer und Kennzahlen. Fallback-Häufigkeit und Vertragskorrektheit sind
-jeweils 100 %; das bedeutet nicht, dass der beste Modus intelligent erkannt wird.
-Treffer außerhalb des erlaubten Dokumentbereichs: 0.
-
-**Phase 5c: echte lokale Embeddings.** `--embeddings local` verwendet das bestehende
-CPU-Modell `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` aus dem
-lokalen Cache mit maximal 128 Tokens. Die festen Fixture-Vektoren werden nicht
-für das Ranking verwendet. Dokument-Embeddings werden einmal berechnet und
-für alle Verfahren wiederverwendet. Der [lokale Bericht](docs/retrieval_modes_local_20261122_185223_618848.json)
-zeigt für **semantic, hybrid und hybrid_de jeweils in Entwicklung und Test**:
-**Hit Rate@1 = 100 %, Hit Rate@3 = 100 %, MRR@3 = 1,0** bei sechs Fragen je Split.
-Die deaktivierte Policy liefert exakt dieselben Treffer wie ihr jeweiliger fester
-Fallback. Bereichsfremde Treffer: 0. Beide Evaluationsarten benötigen
-**0 LLM- und 0 OpenAI-Aufrufe**.
-
-Im lokalen Modelllauf erfolgen ein Warm-up und fünf Messläufe je Frage/Methode
-mit rotierender Methodenreihenfolge. Die Suchzeit enthält das Frage-Embedding
-und Retrieval einschließlich gegebenenfalls erforderlichem BM25-Indexaufbau,
-aber keine Dokument-Einbettung. Je Tabellenzeile liegen 30 Suchmessungen vor:
-
-| Split | Modus | Median | P95 |
-| --- | --- | ---: | ---: |
-| Entwicklung | semantic | 23,46 ms | 28,00 ms |
-| Entwicklung | hybrid | 23,24 ms | 29,34 ms |
-| Entwicklung | hybrid_de | 25,64 ms | 33,18 ms |
-| Test | semantic | 24,38 ms | 33,70 ms |
-| Test | hybrid | 24,25 ms | 36,76 ms |
-| Test | hybrid_de | 26,62 ms | 36,55 ms |
-
-Separat aufgezeichnet: Modellladen rund 16,36 s; Dokument-Einbettung rund
-427 ms für Entwicklung und 83 ms für Test. Das Laden misst einen einzelnen
-Aufruf des gecachten Loaders, keinen garantierten Kaltstart. Laufzeiten sind
-lokale Orientierung ohne Lasttest; kleine Unterschiede begründen keine Rangfolge
-der Verfahren. Die Fixture-Laufzeiten sind Einzelmessungen ohne Warm-up und
-nicht mit diesen wiederholten Modellmessungen gleichzusetzen.
-
-Beide Evaluationen aus `backend` erneut ausführen:
-
-```powershell
-# Deterministische Fixtures, kein Modell erforderlich:
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval_modes.py --embeddings fixtures
-# Tatsächliches lokales Modell, fünf Wiederholungen nach Warm-up:
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval_modes.py --embeddings local --repeats 5
-```
-
-Jeder Lauf erstellt einen neuen Zeitstempel-Bericht unter `docs/`; vorhandene
-Dateien werden nicht überschrieben. Optional ist `--output` mit neuem Pfad
-möglich. Der lokale Modus erzwingt Offline-Betrieb und benötigt bereits gecachte
-Modellgewichte; er lädt weder ein fehlendes Modell herunter noch `.env`.
-
-**Kein Qualitätsgewinn durch automatische Moduswahl nachgewiesen.** Eine
-deaktivierte Policy kann ihren festen Fallback nicht verbessern; auch
-`enabled=True` ändert ohne validierte Regel nichts. Die kleinen, bekannten
-synthetischen Datensätze erlauben keine allgemeine Aussage über reale Dokumente.
-Der perfekte lokale Modelllauf unterscheidet die Modi nicht ausreichend.
-Fixtures messen keine echte Embedding-Qualität, und beide Verfahren messen keine
-LLM-Antwortqualität. Deshalb wird keine automatische Aktivierung empfohlen.
-
-### Isolierte Retrieval-Qualitätsdiagnose: Phase 6b
-
-`backend/app/workflows/retrieval_quality.py` stellt `diagnose_retrieval()` bereit.
-Es prüft ausschließlich Struktur: nutzbare nichtleere Texte, Zitiermetadaten,
-Dokument-IDs, erlaubten Dokumentbereich, Duplikate und verfügbare Scores.
-Es gibt keine universellen Score-Schwellen oder Keyword-Relevanzheuristiken.
-
-| Status | Tatsächliches Verhalten |
-| --- | --- |
-| `no_context` | Keine nutzbare, nichtleere Textstelle vorhanden |
-| `unknown` | Text vorhanden; semantische Belegbarkeit bleibt ungeprüft |
-| `sufficient` | Für ein validiertes Prüfverfahren reserviert; wird derzeit niemals vergeben |
-
-Fehlende Zitiermetadaten werden als Probleme gemeldet, ohne vorhandenen Text
-als fehlenden Kontext auszugeben. Unbekannte/gelöschte Dokument-IDs und Treffer
-außerhalb einer expliziten Auswahl bleiben Fehler. `document_ids=[]` bleibt leer.
-**Die Diagnose löst weder automatische Abstention noch Retry aus und ist nicht
-im produktiven Graphen integriert.** Der bereits bestehende lokale Abstain-Node
-bei leerer Trefferliste bleibt davon unabhängig.
-
-Die [32 kontrollierten Fälle](data/evaluation/retrieval_quality_cases.json)
-umfassen 16 Kategorien, je 16 Fälle in Entwicklung und Test mit getrennten
-Dokumenten und Fragefamilien. Es sind ausdrücklich Ranglisten-Fixtures, keine
-echten Modell-Rankings. Der [Bericht](docs/retrieval_quality_offline_20261122_191232_353828.json)
-zeigt 20-mal `unknown`, sechsmal `no_context` und sechs korrekt abgewiesene
-Fehlerfälle, darunter zwei Bereichsverletzungen. Falsches `no_context` bei
-vorhandenem Text: 0/20; `sufficient`: 0. Sowohl vollständig belegende als auch
-unzureichende oder irrelevante Texte erhalten `unknown`. Die 32/32 korrekt
-behandelten Strukturfälle sind kein Nachweis semantischer Antwortqualität.
-
-### Query-Retry-Experiment: Phase 6c und 6d
-
-`backend/app/workflows/query_retry_experiment.py` führt zuerst die Originalsuche
-aus. Nur bei ausdrücklichem `enabled=True` und einer vorgegebenen gültigen
-alternativen Anfrage ist genau eine zweite Suche erlaubt. Gleiche Anfragen nach
-`casefold`/Leerraumnormalisierung, fehlende/ungültige Alternativen und leere
-Dokumentauswahl führen zu keinem Retry. Es gibt keine LLM-Reformulierung oder
-automatische Auslösung durch `unknown`. Suchmodus und Dokumentbereich bleiben
-gleich; Fehler führen niemals zu einer globalen Ersatzsuche.
-
-Die vorab festgelegte Kontextregel schützt Original-Rang 1. Weitere Kandidaten
-werden mit gleichgewichteter RRF und Konstante 60 kombiniert, nach
-Dokument-ID/Chunk-ID/Seite dedupliziert und auf das finale Budget begrenzt.
-Bei Gleichstand hat die erste Suche Vorrang. Originalergebnisse bleiben separat
-erhalten; überlappende Treffer behalten deren ursprüngliche Metadaten und Scores.
-Niedriger platzierte erfolgreiche Originaltreffer sind nicht garantiert geschützt;
-mögliche Verschlechterungen werden deshalb explizit gemessen.
-
-Der [Retry-Datensatz](data/evaluation/query_retry_cases.json) enthält je acht
-Entwicklungs- und Testfälle mit getrennten Dokumenten und Fragefamilien.
-Je Split haben fünf Fälle erlaubte Relevanzreferenzen. Vollständige Evidenz ist
-von einem einzelnen relevanten Chunk zu unterscheiden; sie verlangt alle
-Referenzen einer mehrteiligen Frage.
-
-**Phase 6c – feste Vektoren:** Der [Fixture-Bericht](docs/query_retry_offline_20261122_200558_598018.json)
-verwendet echte Retrieval-Funktionen mit manuellen Testvektoren. Die Ergebnisse
-sind in beiden Splits gleich:
-
-| Verfahren | Hit@1 | Hit@3 | MRR@3 | Vollständige Evidenz |
-| --- | ---: | ---: | ---: | ---: |
-| Single-Pass, Top-3 | 20 % | 40 % | 0,3000 | 1/5 |
-| Single-Pass, Top-6 → Original-Top-3 | 20 % | 40 % | 0,3000 | 1/5 |
-| Retry, höchstens zweimal Top-3 | 20 % | 60 % | 0,3333 | 2/5 |
-
-Je Split: ein geretteter Fehlschlag, kein verschlechterter Erfolg und drei
-unnötige Retrys; Suchläufe 8/8/13. Die damalige Budget-Baseline betrachtet mehr
-Kandidaten, wählt aber ohne Re-Ranker weiterhin die ursprünglichen Top-3.
-Der Fixture-Vorteil belegt deshalb keinen robusten Reformulierungsvorteil oder
-bessere reale Antworten. Die Alternativen sind manuell vorgegeben und werden
-nicht auf semantische Absichtstreue geprüft.
-
-**Phase 6d – echte lokale Embeddings:** Dasselbe Skript verwendet mit
-`--embeddings local` das CPU-Modell
-`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` aus dem lokalen Cache.
-Die [lokale Auswertung](docs/query_retry_local_20261122_201331_651751.json)
-ergänzt eine sinnvollere Budget-Baseline: Top-6 der Originalfrage, danach MMR
-mit Lambda 0,5, geschütztem Original-Rang 1 und drei finalen Chunks. Eine
-Zusatzkontrolle wendet denselben MMR-Selektor auf die Retry-Kandidaten an.
-
-| Verfahren | Vollständige Evidenz Entwicklung | Vollständige Evidenz Test | Suchläufe je Split |
-| --- | ---: | ---: | ---: |
-| Single-Pass Top-3 | 5/5 | 4/5 | 8 |
-| Top-6 → MMR | 5/5 | 5/5 | 8 |
-| Retry mit unveränderter RRF-Regel | 5/5 | 4/5 | 13 |
-| Retry + MMR-Zusatzkontrolle | 5/5 | 5/5 | 13 |
-
-Hit@1, Hit@3 und MRR@3 betragen für alle Verfahren in beiden Splits 100 %,
-100 % und 1,0. Der unveränderte Retry rettet keinen Fehlschlag und verliert
-keinen bisherigen Erfolg; unnötige Retrys: fünf in Entwicklung, vier im Test.
-Die zusätzliche Evidenz im Test wird schon durch Einzelsuche plus MMR erreicht;
-ein Zusatznutzen der alternativen Suchanfrage ist nicht nachgewiesen.
-Alle Verfahren behalten maximal drei finale Chunks und denselben Dokumentbereich.
-MMR benötigt ein zusätzliches Originalfrage-Embedding pro nichtleerem Fall.
-Ein Warm-up und fünf Messläufe je Frage/Methode sind im Bericht dokumentiert.
-Die dortigen lokalen Laufzeiten trennen Modellladen und Dokument-Einbettung
-von Suche/Auswahl; sie sind keine belastbaren Performance-Benchmarks.
-
-### Unabhängige MMR-Kandidatenauswahl: Phase 6e
-
-`backend/scripts/evaluate_mmr_selection.py` untersucht einen
-[neuen Datensatz](data/evaluation/mmr_selection_cases.json) mit vier Dokumenten,
-36 Chunks und 20 Fragen. Je Split: zehn Fragen, davon sieben mit erlaubten
-Belegen, zwei mit fehlender Information und eine explizit leere Auswahl.
-Dokumente und Fragefamilien sind zwischen Entwicklung und Test getrennt;
-Phase-6d-Fälle dienen nur als Regressionstests, nicht als unabhängiger Erfolgsbeleg.
-Verwendet werden echte lokale Embeddings, Semantic Search, identische Filter
-und drei finale Chunks: entweder direkt Top-3 oder Top-6 mit MMR-Auswahl.
-
-Lambda wurde ausschließlich auf Entwicklung aus 0,25/0,5/0,75/1,0 gewählt.
-Vorab festgelegte Priorität: vollständige Evidenzrate, mittlere Faktenabdeckung,
-MRR@3 und bei Gleichstand höheres Lambda. Der Wert wird vor Test-Einbettung und
-Testauswertung eingefroren; auf dem Testsplit werden keine weiteren Werte geprüft.
-
-| Lambda, nur Entwicklung | Vollständige Evidenz |
-| --- | ---: |
-| 0,25 | 4/7 |
-| 0,5 | 5/7 |
-| 0,75 | 6/7 |
-| 1,0 (gewählt) | 6/7 |
-
-Lambda 1,0 nutzt keine Diversitätsstrafe. Der [MMR-Bericht](docs/mmr_selection_local_20261122_202517_474788.json)
-zeigt identische Top-3- und ausgewählte MMR-Ergebnisse: vollständige Evidenz
-6/7 auf Entwicklung und **5/7 auf dem zurückgehaltenen Testsplit**. Hit@1 und
-Hit@3 sind jeweils 100 %, MRR@3 ist 1,0. Es gibt beim festgelegten Lambda keine
-Verbesserungen oder Verschlechterungen; kleinere Lambdas verloren dagegen auf
-Entwicklung teilweise vollständige Belege. Geschützter Rang 1 bedeutet zudem,
-dass MMR Hit@1 grundsätzlich nicht verbessern kann.
-
-Nach einem Warm-up und fünf Wiederholungen je Fall beträgt der Suchmedian
-Top-3/MMR rund 29,17/59,15 ms auf Entwicklung und 31,48/62,98 ms auf Test.
-MMR verursacht je Benchmark-Durchgang neun zusätzliche Frage-Embeddings pro Split;
-Dokument-Embeddings werden einmalig berechnet. Trotz fehlender Information liefern
-beide Verfahren bei zwei Fragen je Split Kontext; daraus folgt keine Beantwortbarkeit.
-Bereichsverletzungen: 0. Alle Phase-6-Auswertungen verwenden 0 OpenAI-Aufrufe.
-
-### Phase-6-Experimente erneut ausführen
-
-Aus `backend`, jeweils mit dem vorhandenen virtuellen Interpreter:
-
-```powershell
-# Strukturdiagnose mit kontrollierten Ranglisten-Fixtures:
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval_quality.py
-# Retry mit festen Testvektoren:
-.\.venv\Scripts\python.exe scripts/evaluate_query_retry.py --embeddings fixtures
-# Retry und MMR-Budgetkontrolle mit echtem lokalem Modell:
-.\.venv\Scripts\python.exe scripts/evaluate_query_retry.py --embeddings local --repeats 5
-# Separater MMR-Vergleich mit ausschließlich entwicklungsbasierter Lambda-Wahl:
-.\.venv\Scripts\python.exe scripts/evaluate_mmr_selection.py --repeats 5
-```
-
-Jeder Lauf erstellt einen neuen Zeitstempel-Bericht unter `docs/`. Vorhandene
-Ausgabedateien werden abgewiesen; optional ist `--output` mit neuem Pfad möglich.
-Lokale Modellläufe erzwingen Offline-Betrieb und brauchen bereits gecachte
-Modellgewichte. Keine dieser Evaluationen benötigt OpenAI oder liest `.env`.
-
-**Produktionsstatus und Grenzen:** Diagnose, Retry und MMR sind isolierte
-Experimente, nicht in FastAPI, Streamlit oder den produktiven LangGraph eingebunden.
-Es wurde weder für Retry noch für MMR ein belastbarer Vorteil gegenüber dem
-bisherigen Single-Pass-Retrieval nachgewiesen; deshalb wurden sie nicht produktiv
-aktiviert. Kleine synthetische Datensätze, manuelle Alternativen und unterschiedliche
-Kontextselektoren begrenzen die Aussagen. Vollständige Referenzabdeckung beweist
-keine korrekte generierte Antwort. Ein autonomer LLM-Prüfer oder Router ist nicht
-implementiert; eine produktive Integration bleibt ein separater, noch offener Schritt.
-
-## Development Roadmap
-
-- [x] FastAPI backend setup
-- [x] PDF text extraction
-- [x] Token-based text chunking
-- [x] Local embedding generation
-- [x] Semantic search
-- [x] RAG answer generation
-- [x] Streamlit chat interface
-- [x] Multi-document support
-- [x] Document and page references
-- [x] Automated testing
-- [x] Persistent document and embedding storage with SQLite
-- [ ] Advanced retrieval and answer-quality evaluation
-- [x] LangGraph document workflow, rule-based search policy and offline routing evaluation (Phase 3a–3e)
-- [x] Isolated, disabled retrieval-mode policy and fixture/local-embedding evaluation (Phase 5b–5c)
-- [x] Isolated structural retrieval diagnostics and offline query-retry experiments (Phase 6b–6d; not production-integrated)
-- [x] Independent local-embedding MMR evaluation with development-only lambda selection (Phase 6e; not production-integrated)
-- [ ] Production quality checks/retry/MMR, only after robust independent evidence of benefit
-- [ ] Autonomous LLM router, only after independently demonstrated benefit
-- [ ] Improved document analysis and information extraction
-- [ ] Deployment and CI/CD
-
-## Current Limitations
-
-DocuAgent is currently a local development prototype.
-
-- Indexed document metadata, chunks, and embeddings are persisted locally in SQLite and restored on backend startup. Original PDF files are not stored.
-- The application is designed for local single-user use.
-- OpenAI API access is required for answer generation.
-- Source references do not guarantee that every generated answer is factually correct.
-- Production authentication and access controls have not yet been implemented.
-
-## Getting Started
-
-### Retrieval-Evaluation
-
-Der Datensatz [retrieval_questions.json](data/evaluation/retrieval_questions.json)
-enthält 20 Fragen mit überprüfbaren Textbelegen aus den beiden künstlichen PDFs.
-Die Evaluation verändert weder die RAG-Pipeline noch die SQLite-Dokumente.
-Sie verwendet nur das vorhandene lokale Embedding-Modell und keine OpenAI API.
-
-Aus `backend` ausführen:
-
-```powershell
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py
-.\.venv\Scripts\python.exe -m pytest -v
-```
-
-Der tatsächlich ausgeführte lokale Modelllauf ergab **Hit Rate@1: 75 %**,
-**Hit Rate@3: 95 %** und **MRR: 0,8625** bei 20 Fragen und 18 Chunks.
-Die vollständigen Fragen, erwarteten Quellen, Ränge und Scores stehen im
-[Evaluationsbericht](docs/retrieval_evaluation.md); der
-[JSON-Bericht](docs/retrieval_evaluation.json) enthält zusätzlich alle Rangfolgen
-und Fingerabdrücke der Eingabedateien. Ein erneuter Lauf überschreibt diese Berichte.
-Automatisierte Validierung: **182 Tests bestanden** (`python -m pytest -v`).
-
-Hit Rate@1/3 misst, wie oft ein belegender Chunk unter den ersten 1/3 Treffern liegt.
-MRR mittelt den Kehrwert des ersten relevanten Rangs: Rang 1 ergibt 1, Rang 2 ergibt
-0,5, ein fehlender Treffer 0. Die Auswertung nutzt die vollständige Rangliste.
-Dateiname, Seite und Textbelege bestimmen die Relevanz; Beispielfragen ohne Antwort
-zählen nicht. Alternative gültige Quellen sind zugelassen. Der kleine Datensatz
-misst ausschließlich Retrieval auf diesen Testdokumenten, keine LLM-Antwortqualität.
-
-### Hybrid Retrieval mit BM25 und RRF
-
-Die semantische Suche bleibt der Standard. Optional kombiniert `hybrid` sie mit
-`BM25Okapi` aus dem etablierten Paket [rank-bm25](https://github.com/dorianbrown/rank_bm25).
-BM25 bewertet gemeinsame Wörter anhand von Häufigkeit, Seltenheit und Chunklänge.
-Dokumente und Fragen werden identisch in Unicode-Wörter/Zahlen zerlegt und mit
-`casefold` normalisiert. Im Modus `hybrid` gibt es kein Stemming und keine Stoppwortliste.
-
-Reciprocal Rank Fusion kombiniert die Ranglisten mit
-`RRF = 1/(60 + Rang_semantic) + 1/(60 + Rang_bm25)`.
-Fehlende BM25-Treffer tragen 0 bei. Beide Verfahren sind gleich gewichtet.
-Die Konstante 60 folgt der [RRF-Originalarbeit](https://cormack.uwaterloo.ca/cormack/cormacksigir09-rrf.pdf).
-BM25 verwendet k1=1,5, b=0,75 und epsilon=0,25. Diese Parameter wurden vor der
-Evaluation festgelegt und nicht an die 20 Fragen angepasst.
-Beide Verfahren berücksichtigen alle vorhandenen Chunks; BM25 liefert nur Chunks
-mit einer Wortübereinstimmung. Bei Gleichstand bleibt die Reihenfolge stabil.
-
-Im PowerShell-Terminal des Backends vor dem Start auswählen, ohne `.env` zu ändern:
-
-```powershell
-$env:DOCUAGENT_RETRIEVAL_MODE = "hybrid"  # alternativ: "semantic" (Standard)
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-
-Die API-Anfragen und Streamlit bleiben unverändert. Im Python-Service kann der
-Modus pro Suche explizit gewählt werden: `collection.search(query, mode="semantic")`
-oder `collection.search(query, mode="hybrid")`. Dokument-IDs und Chunk-Metadaten
-bleiben erhalten. `similarity_score` ist weiterhin die unveränderte
-Kosinus-Ähnlichkeit; Hybrid sortiert nach dem zusätzlichen `rrf_score` und liefert
-auch `bm25_score`, `semantic_rank` und `bm25_rank`. Die Scores haben unterschiedliche
-Skalen. SQLite speichert weiterhin die vorhandenen Dokumente und Embeddings.
-Der BM25-Index wird bei Bedarf aus diesen Chunks aufgebaut, wiederverwendet und bei
-Hinzufügen/Löschen eines Dokuments neu erstellt. Dokument-Embeddings werden dafür
-nicht erneut berechnet.
-
-Vergleich mit exakt demselben Datensatz und einmalig vorbereiteten Embeddings:
-
-```powershell
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --mode compare
-# Einzeln weiterhin möglich:
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --mode semantic
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --mode hybrid
-```
-
-`compare` ist der Standard des Evaluationsskripts. Die tatsächlichen Ergebnisse:
-
-| Methode | Hit Rate@1 | Hit Rate@3 | MRR |
-| --- | ---: | ---: | ---: |
-| Semantic | 75 % | 95 % | 0,862500 |
-| Hybrid | 65 % | 80 % | 0,765833 |
-
-Bei 20 Fragen verbessern sich 1, verschlechtern sich 4 und bleiben 15 unverändert.
-Sicherheitsupdates steigen von Rang 2 auf 1; Urlaubstage fallen von 1 auf 2,
-Urlaubsantrag und Rechnungsfrist von 1 auf 5, Passwortlänge von 2 auf 6.
-Die Keyword-Suche erkennt Wortformen wie „Passwort/Passwörter“ nicht als identisch.
-Hybrid ist in diesem Test schlechter; deshalb bleibt `semantic` der Standard.
-Es wurden weder Rankings nachbearbeitet noch die Parameter nachträglich optimiert.
-Alle 20 Rangvergleiche stehen im [Vergleichsbericht](docs/hybrid_retrieval_comparison.md),
-die vollständigen Rohscores im [JSON-Bericht](docs/hybrid_retrieval_comparison.json).
-Es erfolgen keine LLM-Aufrufe und keine Änderungen an `.env` oder der Nutzerdatenbank.
-Validierung nach der Hybrid-Erweiterung: **201 Tests bestanden**; `pip check`
-meldet keine Abhängigkeitsprobleme.
-
-### Deutsche BM25-Wortnormalisierung
-
-Der zusätzliche Modus `hybrid_de` verwendet den deutschen
-[Snowball-Stemmer](https://snowballstem.org/algorithms/german/stemmer.html)
-aus `snowballstemmer` (lokal installiert: Version 3.1.1). Dokument-Chunks und
-Suchfragen werden identisch mit Unicode-NFC, `casefold`, Wortzerlegung und
-Snowball-Stemming normalisiert. Texte, Embeddings und Quellen bleiben unverändert.
-Der bisherige Modus `hybrid` bleibt ohne Stemming verfügbar. `semantic` bleibt Standard.
-
-```powershell
-# Im Backend-Terminal optional auswählen; keine Änderung an .env:
-$env:DOCUAGENT_RETRIEVAL_MODE = "hybrid_de"
-# Vergleich aller drei Varianten aus backend:
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --mode compare
-```
-
-Der neue Vergleich verwendet exakt dieselben 20 Fragen, Referenzen und 18 Chunks.
-Dokument-Embeddings werden für alle drei Varianten nur einmal berechnet. RRF bleibt
-gleichgewichtet mit Konstante 60; auch k1=1,5, b=0,75 und epsilon=0,25 bleiben
-unverändert. Keine Stoppwörter, Synonymregeln oder testspezifischen Wörterbücher wurden ergänzt.
-
-| Methode | Hit Rate@1 | Hit Rate@3 | MRR |
-| --- | ---: | ---: | ---: |
-| Semantic | 75 % | 95 % | 0,862500 |
-| Hybrid bisher | 65 % | 80 % | 0,765833 |
-| Hybrid mit Snowball DE | 60 % | 95 % | 0,776667 |
-
-Die vier bisherigen Verschlechterungen lassen sich anhand der tatsächlichen
-BM25-Ränge erklären:
-
-- **Urlaubstage:** Der relevante Chunk hat nur die Worttreffer `urlaubstage` und
-  `pro`, BM25-Rang 3. Beispielfragen rangieren höher. Stemming macht daraus
-  `urlaubstag` und `pro`, verbessert den Rang aber nicht: Hybrid bleibt Rang 2.
-- **Urlaubsantrag:** Bisher keine gemeinsamen Wörter im relevanten Chunk. Snowball
-  gleicht unter anderem `Urlaubsantrag/Urlaubsanträge` und `muss/müssen` an.
-  Der Chunk erhält BM25-Rang 3 und steigt in der Fusion von 5 auf 2.
-  `einreichen/eingereicht` bleiben jedoch verschiedene Stämme.
-- **Lieferantenrechnungen:** Bisher trifft im relevanten Chunk nur `werden` zu,
-  BM25-Rang 13. Nach Stemming treffen `muss` und `werd` zu, BM25-Rang 12.
-  `Lieferantenrechnungen/Rechnungen` werden nicht als identischer Begriff erkannt:
-  Snowball zerlegt keine zusammengesetzten Wörter. Die Fusion bleibt Rang 5.
-- **Passwortlänge:** Bisher kein Worttreffer. `Passwort/Passwörter` und
-  `muss/müssen` werden angeglichen. BM25-Rang 3; Fusion verbessert sich von 6 auf 2.
-
-Zusätzlich verbessert sich die Meldefrist für verlorene Firmenlaptops von Rang 4
-auf 3. Bei der Einkaufsfreigabe entsteht dagegen eine neue Verschlechterung von
-Rang 1 auf 2: Der relevante Chunk fällt in BM25 von Rang 2 auf 3. Die neuen Stämme
-verändern auch Dokumenthäufigkeiten, IDF-Werte und Treffer konkurrierender Chunks;
-ein Beispielfragen-Chunk erhält den ersten Platz. Stemming ist daher keine Garantie
-für eine bessere Rangfolge.
-
-Gegenüber bisherigem Hybrid: **3 Fragen besser, 1 schlechter, 16 unverändert**.
-Gegenüber Semantic: **2 besser, 4 schlechter, 14 unverändert**. Alle Fragen mit
-Rängen, Verbesserungen/Verschlechterungen und Token-Diagnosen stehen im
-[neuen Vergleichsbericht](docs/german_hybrid_retrieval_comparison.md) und in den
-[vollständigen JSON-Rohdaten](docs/german_hybrid_retrieval_comparison.json).
-Die bisherigen Zweier-Vergleichsberichte bleiben als historische Baseline erhalten.
-`--mode compare` erzeugt jetzt standardmäßig den neuen Dreier-Vergleich;
-`--mode semantic`, `--mode hybrid` und `--mode hybrid_de` sind einzeln nutzbar.
-
-Der kleine Datensatz zeigt weiterhin keinen Vorteil gegenüber Semantic Search.
-Jede Verbesserung muss mit unabhängigen Fragen bestätigt werden, bevor eine
-Standardumstellung gerechtfertigt ist. Es gab keine nachträgliche Optimierung
-der RRF-Gewichte, keine LLM-Aufrufe und keine Änderungen an `.env` oder SQLite.
-Validierung: **212 Tests bestanden**, `pip check` ohne Abhängigkeitsprobleme.
-
-### Evaluation der RAG-Antwortqualität
-
-`backend/scripts/evaluate_answers.py` verwendet eine eigene Speichersammlung mit den
-beiden künstlichen PDFs, Semantic Search und `top_k=3`. Die SQLite-Nutzerdaten und
-`.env` werden nicht geöffnet oder verändert. Die Antwortgenerierung erhält nur Frage
-und gefundene Chunks, niemals Sollantworten oder Bewertungsmuster.
-
-Der Datensatz [answer_questions.json](data/evaluation/answer_questions.json) enthält
-20 überprüfbare Sollantworten mit Quellenverweisen auf die bestehende
-Retrieval-Referenzdatei und vier manuell am vollständigen PDF-Text geprüfte
-Nichtwissen-Fragen (Gehalt, IT-Telefonnummer, Passwortmanager, Umsatz). Alle
-beantwortbaren Quellenbelege werden vor dem Lauf gegen die PDF-Extraktion validiert.
-
-**Zwei getrennte Bewertungsebenen:**
-
-| Kriterium | Deterministische Teilprüfung | Semantische Prüfung durch Mensch oder separat freigegebenen LLM-Judge |
-| --- | --- | --- |
-| Answer Correctness | Regex-Prüfung wichtiger Zahlen/Begriffe (`correctness_fact_match_proxy`) | Ist die gesamte Antwort richtig und vollständig, einschließlich Bedingungen? |
-| Faithfulness | Prüfen, ob der Retrieval-Kontext den Sollbeleg enthält | Folgt jede Tatsachenbehauptung aus den tatsächlich übergebenen Chunks? |
-| Citation Accuracy | IDs/Dateiname gegen Kontext prüfen; erwarteten Beleg in zitierten Chunks suchen | Belegt jede angegebene Quelle tatsächlich die zugehörige Aussage? |
-| Abstention | Explizite Nichtwissen-Formulierung und leere Quellenliste erkennen | Wurde bei wirklich fehlender Information korrekt und ohne erfundene Zusätze verweigert? |
-
-Die semantische [Review-Rubrik](data/evaluation/answer_review_rubric.json) definiert
-pro Kriterium 0 (nicht erfüllt), 1 (teilweise) oder 2 (vollständig). Im Bericht
-bleiben diese Werte `null`, bis sie separat bewertet werden. Das Skript ruft
-**keinen LLM-Judge** auf. Ein Regex-Treffer kann auch in einer falschen Aussage
-stehen; gültige Quellen-IDs beweisen keine Faithfulness. Bei einer Verweigerung
-wegen eines Retrieval-Fehlers kann Faithfulness gut, Answer Correctness aber
-schlecht sein. Bericht und Rubrik unterscheiden deshalb fehlenden Dokumentinhalt
-von fehlendem Retrieval-Kontext.
-
-**Zuerst Dry-Run aus `backend`:**
-
-```powershell
-.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode dry-run
-# Vorschau genau der späteren drei Live-Fragen:
-.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode dry-run --ids A01 A11 A21
-```
-
-Standard ist `dry-run`. Er berechnet nur Retrieval und eine Kostenschätzung;
-Antworten und Qualitätsraten bleiben unbewertet. Der ausgeführte Dry-Run umfasst
-24 Fragen und findet für 19 von 20 beantwortbaren Fragen einen Sollbeleg im
-Top-3-Kontext. **0 OpenAI-Aufrufe, 0 generierte Antworten.** Der
-[JSON-Bericht](docs/answer_evaluation_dry-run.json) enthält Sollantworten, Quellen,
-tatsächlichen Kontext und ausfüllbare Review-Felder. `--output` wählt einen anderen
-Berichtspfad; vorhandene Berichte werden nicht überschrieben. Bei einem erneuten
-Lauf muss ein neuer Ausgabepfad angegeben werden.
-
-Mit `--workflow legacy` (Standard) wird die Antwort direkt durch den bisherigen
-RAG-Service erzeugt. `--workflow langgraph` verwendet den vorhandenen Workflow
-mit `retrieve`, `abstain` und `generate`. Beide Varianten erhalten exakt den
-vorbereiteten Kontext derselben Evaluationssammlung: Semantic Search, Top-3,
-identische Dokument-IDs, Chunks und Scores. Der Graph-Retriever gibt diese Treffer
-zurück, statt eine zweite Suche oder neue Dokument-Embeddings zu berechnen.
-
-Kostenlose Dry-Runs aus `backend`, mit jeweils neuem Berichtsnamen:
-
-```powershell
-$evaluationRun = Get-Date -Format 'yyyyMMdd_HHmmss_fff'
-.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode dry-run --workflow legacy --output "../docs/answer_eval_legacy_$evaluationRun.json"
-.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode dry-run --workflow langgraph --output "../docs/answer_eval_langgraph_$evaluationRun.json"
-```
-
-Der Dry-Run führt in beiden Varianten ausschließlich die gemeinsame
-Kontextvorbereitung aus, weder Graph noch Antwortgenerator; er misst keine
-Antwortqualität. Erst ein ausdrücklich bestätigter Live-Lauf führt den gewählten
-Antwortpfad aus. Bei leerer Trefferliste verzichtet LangGraph lokal ohne
-Generatoraufruf; legacy nutzt dafür den bestehenden Service ohne OpenAI-Aufruf.
-Die Aufrufzählung zählt dabei nur Generierungsversuche mit nichtleerem Kontext.
-Das Falllimit und die Kostenschätzung bleiben konservativ auf höchstens drei
-Fälle begrenzt. Beide Live-Varianten verlangen weiterhin einen Schlüssel in der
-Prozessumgebung, auch bei leerem Kontext.
-
-Dies ist ein Vergleich der Orchestrierung mit festem Retrieval-Kontext, kein
-FastAPI-End-to-End-Test: produktiver SQLite-Index, HTTP-Fehlerabbildung und
-`.env`-Laden sind nicht beteiligt. Metriken und Review-Auswertung bleiben gleich;
-der Bericht enthält zusätzlich `workflow` und eine Beschreibung der Vergleichsgrenzen.
-Der LangGraph-Standardbericht heißt `docs/answer_evaluation_langgraph_dry-run.json`
-bzw. `docs/answer_evaluation_langgraph_live.json`; die Legacy-Dateinamen bleiben erhalten.
-
-**Erst nach ausdrücklicher Freigabe: kontrollierter Live-Test mit höchstens drei Fragen:**
-
-```powershell
-# OPENAI_API_KEY muss bereits sicher in der Prozessumgebung gesetzt sein.
-# Keine Schlüssel in Befehle, Quellcode oder Logs schreiben.
-.\.venv\Scripts\python.exe scripts/evaluate_answers.py --mode live --confirm-live --max-calls 3 --ids A01 A11 A21
-```
-
-Das prüft Urlaub, Passwortlänge und eine nicht enthaltene Gehaltsinformation.
-Ohne `--confirm-live` bricht Live vor der Modellvorbereitung ab. `--max-calls`
-akzeptiert ausschließlich 1 bis 3. Ohne `--ids` werden höchstens die ersten drei
-Fragen ausgeführt; weitere Fragen stehen als übersprungen im Bericht. Bei einem
-API-Fehler endet die Generierung sofort, ohne automatische Wiederholung.
-`generate_answer()` begrenzt jede Antwort auf 1.000 Outputtokens und deaktiviert
-SDK-Wiederholungen. Der Live-Bericht heißt standardmäßig
-`docs/answer_evaluation_live.json`. Bei fehlendem Umgebungs-Schlüssel wird keine
-Anfrage gesendet; dieses Skript lädt keine `.env`.
-
-Vor jedem Live-Lauf erscheinen Frage-IDs, Aufruflimit und Kostenschätzung. Die
-Inputtokenzahl ist eine grobe UTF-8-Bytes/3-Heuristik einschließlich Prompt/Schema
-plus Reserve; Output wird mit 1.000 Tokens pro Frage geschätzt. Verwendete Tarife
-(geprüft 18.11.2026): 0,40 USD pro Million Inputtokens und 1,60 USD pro Million
-Outputtokens für [gpt-4.1-mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
-Die Schätzung ist **keine Preisgarantie und keine harte Dollar-Ausgabengrenze**;
-Tarife vor einem echten Lauf prüfen. Tatsächliche Kosten werden nicht erfunden
-und bleiben im Bericht `null`, da der bestehende RAG-Service keine Usage-Daten
-zurückgibt.
-
-Für die Nachprüfung speichert der Bericht Fingerabdrücke von Datensätzen, Rubrik
-und System-Prompt sowie den tatsächlich verwendeten Kontext. LLM-Antworten können
-bei Wiederholung variieren. Teilmetriken haben explizite Nenner; Fehler und
-ausgelassene Fragen werden separat gezählt. Manuelle Reviews sollen jede Bewertung
-mit Textstellen begründen. Ein späterer LLM-Judge benötigt eine eigene Freigabe und
-ein eigenes Kostenbudget. Ergebnisse auf diesen künstlichen PDFs müssen mit
-unabhängigen Fragen bestätigt werden.
-
-Validierung nach dieser Erweiterung: **231 Tests bestanden**. Alle Live-Pfade
-wurden dabei ausschließlich mit gemockter OpenAI API geprüft.
-
-### Manuelle Review-Auswertung ohne API-Aufrufe
-
-`backend/scripts/review_answers.py` wertet ausschließlich lokale JSON-Dateien aus.
-Es importiert weder RAG-Services noch OpenAI, lädt kein Modell und greift nicht auf
-SQLite oder `.env` zu. Der ursprüngliche Antwortbericht bleibt unverändert.
-Eine manuelle Bewertung steht in einer **separaten JSON-Datei** und wird mittels
-SHA-256 an den exakten Quellbericht und die vorhandene
-[0–2-Review-Rubrik](data/evaluation/answer_review_rubric.json) gebunden.
-Nach einer Änderung des Quellberichts oder der Rubrik muss eine neue Review-Datei
-erstellt werden; alte Bewertungen werden nicht stillschweigend neu zugeordnet.
-
-Bereits vorbereitet: [manual_answer_reviews.json](docs/manual_answer_reviews.json)
-für die drei vorhandenen generierten Antworten und eine
-[unbewertete Zusammenfassung](docs/manual_answer_review_summary.md).
-Es wurden **keine Noten automatisch vergeben**. Für einen anderen Bericht kann
-aus `backend` eine neue Vorlage erzeugt werden:
-
-```powershell
-.\.venv\Scripts\python.exe scripts/review_answers.py init --report ../docs/answer_evaluation_live.json --reviews ../docs/meine_answer_reviews.json --reviewer "Mein Name"
-```
-
-In der neuen Datei `reviewer` angeben und pro Frage/Kriterium bearbeiten:
-
-```json
-"faithfulness": {
-  "status": "scored",
-  "score": 2,
-  "reason": "Alle Aussagen werden durch die angegebenen Kontextstellen gestützt."
+{
+  "query": "What does the selected document say?",
+  "top_k": 3,
+  "document_ids": ["an-id-returned-by-the-document-list"]
 }
 ```
 
-Diese Note ist nur ein Formatbeispiel, keine tatsächliche Bewertung einer Antwort.
-Die Statuswerte bedeuten:
+Omit `document_ids`, or use `null`, to search all documents. `[]` explicitly selects none. Duplicate IDs are deduplicated; invalid, unknown or deleted IDs are rejected. Sources contain document identity, filename, page and chunk references. The response retains `answer` and `sources`.
 
-- `scored`: ganze Zahl **0, 1 oder 2** und eine konkrete Begründung erforderlich.
-- `unreviewed`: noch nicht bewertet; `score` bleibt `null`.
-- `not_applicable`: nicht anwendbar; `score` bleibt `null`, Begründung erforderlich.
+An empty index returns HTTP 409, invalid requests/scopes HTTP 422, missing answer-service configuration HTTP 503, and generation errors HTTP 502. The API requires a configured key for `/documents/ask` even when the final graph path abstains locally; that local path itself makes no model call.
 
-Gemäß Rubrik ist Answer Correctness bei unbeantwortbaren Fragen nicht anwendbar,
-Abstention bei beantwortbaren Fragen. Die Vorlage kennzeichnet diese Fälle bereits.
-Citation Accuracy kann bei einer Verweigerung ohne Tatsachenbehauptungen als nicht
-anwendbar markiert werden; das muss der Reviewer anhand der tatsächlichen Antwort
-prüfen. Frage, Sollantwort, Quellen und Kontext sind im Quellbericht nachzulesen.
-Dry-Run-Fälle ohne generierte Antwort sind nicht bewertbar und werden nicht in die
-Vorlage übernommen. Unbekannte oder doppelte IDs, ungültige Noten und Kriteriennamen
-werden abgelehnt. Ausgelassene Fragen/Kriterien gelten als unbewertet.
+## Evaluation Results
 
-Auswertung in einen **neuen** Markdown-Bericht schreiben:
+### Retrieval: original 20-question synthetic sample
+
+| Method | Hit@1 | Hit@3 | Full-ranking MRR |
+| --- | ---: | ---: | ---: |
+| Semantic Search | 75% | 95% | 0.862500 |
+| Hybrid Search | 65% | 80% | 0.765833 |
+| German Hybrid Search | 60% | 95% | 0.776667 |
+
+These results use two synthetic PDFs, the same relevance references and the same local embedding model. They support retaining Semantic as the default for this experiment, not a universal ranking claim. Later experiments use MRR@3, which is not the same as full-ranking MRR.
+
+### Real answer pilot and review
+
+A separate controlled pilot recorded six real model responses from frozen synthetic contexts, one supplied chunk per case:
+
+| Item | Recorded value |
+| --- | ---: |
+| Development / test cases | 3 / 3 |
+| Evaluated factual claims | 7 |
+| Evaluated question facets | 10 |
+| Technically valid source references | 5 |
+| Justified abstentions, according to annotations | 3 |
+| Input / output tokens | 2,409 / 276 |
+
+The requested model was `gpt-4.1-mini`; recorded model metadata identifies `gpt-4.1-mini-2025-04-14`. An **AI-assisted semantic review through ChatGPT** supplied the explicit assessment decisions. On the applicable units, the recorded mean is 2/2: seven claims for correctness/faithfulness/citation coverage, five sources for source precision, and ten facets for completeness. These are review outcomes on a tiny selected sample, **not general production accuracy** or independent human evaluation.
+
+Synthetic answer fixtures are separate regression data containing intentional faults; they are not a model-performance baseline. Details, including the D04 wording limitation and T05 schema mapping, are in the [public evaluation summary](docs/public_evaluation_summary_20261125.md).
+
+The raw live artifact chain is retained locally and is not part of the recommended public bundle. The public summary therefore does **not** offer complete public revalidation of the real-model pilot. Public synthetic datasets and offline tools remain available.
+
+## Installation and Configuration
+
+### Requirements
+
+- Python 3.11 is the documented local target.
+- Internet access for package installation and the first embedding-model download.
+- An OpenAI API key and provider access for answer generation, which can incur charges.
+
+From the repository root, in PowerShell:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/review_answers.py summarize --report ../docs/answer_evaluation_live.json --reviews ../docs/meine_answer_reviews.json --output ../docs/meine_answer_reviews_v1.md
+python -m venv backend/.venv
+.\backend\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
 ```
 
-Nach weiteren Bewertungen für `--output` einen neuen Namen wie `_v2.md` wählen.
-Vorhandene Dateien werden grundsätzlich abgelehnt und niemals überschrieben.
-Dies gilt auch, wenn versehentlich der Quellbericht oder die Review-Datei als
-Ausgabepfad angegeben wird.
+The commands create a new environment for a new checkout; use the existing `backend/.venv` when it is already configured. Most dependency versions are not pinned. A clean-install or cross-machine reproduction is not guaranteed by the existing local test results.
 
-Der Bericht zeigt pro Kriterium Durchschnitt auf der Skala 0–2, Anzahl tatsächlich
-bewerteter Fälle, unbewertete Fälle und nicht anwendbare Fälle. Einzelnoten und
-Begründungen bleiben sichtbar. Nur `scored` fließt in den Mittelwert ein:
-Noten 2 und 0 ergeben **1,0 bei zwei Bewertungen**, unabhängig davon, wie viele
-andere Fälle unbewertet oder nicht anwendbar sind. Ohne Bewertungen bleibt der
-Mittelwert `null` bzw. „nicht bewertet“. Es wird kein irreführender Gesamtwert
-über alle Kriterien gebildet. Bewertungsabdeckung und subjektive Urteile müssen
-bei der Interpretation berücksichtigt werden.
+| Variable | Used by | Default / meaning |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | Backend answer service | No default; configure securely before asking questions |
+| `DOCUAGENT_API_URL` | Streamlit process | `http://127.0.0.1:8000` |
+| `DOCUAGENT_DB_PATH` | Backend | `data/storage/docuagent.sqlite3`; relative paths resolve from the project root |
+| `DOCUAGENT_RETRIEVAL_MODE` | Backend retrieval | `semantic`; alternatives `hybrid`, `hybrid_de` |
 
-Die lokale Vorlage/Auswertung wurde ohne erneute Antwortgenerierung ausgeführt.
-Es gab keine Live-Evaluation, keine LLM-Bewertung und keine Änderung vorhandener
-JSON-Berichte. Die neuen Tests prüfen insbesondere Nenner, echte Nullnoten,
-ungültige Noten, Quellenbericht-Zuordnung und Überschreibschutz.
-Validierung: **252 Tests bestanden**; `pip check` meldet keine Probleme.
+Set the key using your preferred secure credential mechanism in the backend process environment. Do not print it, put it in source code, or commit it. The backend also supports an optional ignored `backend/.env` with a stable path; process environment values take precedence. Streamlit does not load that file or receive the API key. Keep local credentials and storage out of Git.
 
-### Lokale SQLite-Speicherung testen
+The first real embedding use may download model weights. Cached local embeddings do not use the OpenAI API. Asking a question with usable context sends the question and retrieved text to OpenAI; use synthetic or appropriately authorized documents.
 
-Die Datenbank wird beim FastAPI-Start automatisch unter
-`data/storage/docuagent.sqlite3` angelegt. Der Pfad ist unabhängig vom
-Arbeitsverzeichnis. Optional kann `DOCUAGENT_DB_PATH` einen anderen lokalen Pfad
-festlegen; relative Pfade beziehen sich auf den Projektordner. Die Standarddatenbank
-und ihre Journaldateien sind von Git ausgeschlossen.
+## Running the Application
 
-1. FastAPI und Streamlit wie bisher mit dem Interpreter aus `backend/.venv` starten.
-2. Künstliche PDFs über Streamlit hinzufügen und die Dokumentliste prüfen.
-3. Nur FastAPI mit `Strg+C` stoppen und mit demselben Befehl neu starten.
-4. In Streamlit „Dokumentliste aktualisieren“ wählen. Dokumente und IDs bleiben erhalten;
-   eine erneute Indexierung ist nicht nötig.
-5. Eine Suche über `POST /documents/search` testen. Sie verwendet gespeicherte
-   Dokument-Embeddings und benötigt keinen OpenAI-Aufruf. Chatfragen über
-   `/documents/ask` verwenden weiterhin die kostenpflichtige OpenAI API.
-6. Ein Dokument entfernen und FastAPI erneut starten: Es bleibt gelöscht.
+Use two PowerShell terminals, both starting in the repository root.
 
-SQLite speichert Dokumenttexte lokal im Klartext. Bereits vor dieser Änderung nur
-im Arbeitsspeicher vorhandene Dokumente müssen einmal neu indexiert werden.
-Der Prototyp ist weiterhin für einen lokalen Benutzer und einen FastAPI-Prozess
-vorgesehen. Der bisherige Endpunkt `/documents/index` ersetzt auch in SQLite den
-gesamten Index; die Streamlit-Oberfläche verwendet zum Hinzufügen `/documents`.
+**Terminal 1: FastAPI**
 
-A complete installation and configuration guide will be added as development progresses.
+```powershell
+Set-Location backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
 
-The project currently runs locally using FastAPI and Streamlit. An OpenAI API key is required for AI-generated answers and must be configured through environment variables.
+**Terminal 2: Streamlit**
 
-**Never commit API keys or `.env` files to GitHub.**
+```powershell
+Set-Location backend
+.\.venv\Scripts\python.exe -m streamlit run streamlit_app.py
+```
 
-## Project Goal
+FastAPI interactive API documentation is available at `http://127.0.0.1:8000/docs`; Streamlit normally serves at `http://localhost:8501`. The current UI and many code comments are in German; this README does not imply a translated interface.
 
-The goal is to develop DocuAgent into a more robust AI document intelligence application, with persistent storage, improved retrieval quality, and agent-based workflows.
+Upload PDFs, index them, choose all documents or an explicit subset, and ask questions. Identical filenames remain distinguishable through their document IDs. Refresh the document list after changes from another session. Documents survive backend restart when the same SQLite path is used; all sessions share that local index.
 
-The project also serves as a hands-on demonstration of Python backend development, RAG architecture, API integration, and AI application testing.
+## Testing and Evaluation
 
----
+All commands below run from `backend`. Automated tests use artificial documents and mocks, without paid OpenAI calls:
 
-**Development Status:** Active development – features and architecture are continuously being improved.
+```powershell
+.\.venv\Scripts\python.exe -m pytest -v
+.\.venv\Scripts\python.exe -m pip check
+```
+
+The complete local suite passed **665 tests on 25 November 2026**. This is a dated Windows result, not a GitHub Actions result.
+
+### Continuous integration
+
+The [CI workflow](.github/workflows/ci.yml) runs the complete automated suite on pushes and pull requests to `main`, using Ubuntu 24.04 and Python 3.11. It installs public dependencies, runs `pip check`, then runs `python -m pytest -v` with no test exclusions (currently 665 tests).
+
+Tests use mock OpenAI responses and synthetic embeddings; no paid API calls or model-weight downloads are intended. External Python socket connections are blocked during tests, and Hugging Face offline mode is enabled. Loopback remains available for local test infrastructure. Dependency installation downloads public packages; that is separate from API usage. Only pip downloads are cached, not model weights or private artifacts.
+
+A remote GitHub Actions run has **not yet been performed**. Fresh Linux dependency resolution remains unverified; requirements are mostly unpinned. See the [CI audit and dependency-versioning proposal](docs/ci_reproducibility_8b_20261125.md) and [updated publication selection](docs/publication_selection_8b_20261125.md). All required Phase-7 source, tests and synthetic data must be included in the proposed commit.
+
+### Offline experiments
+
+```powershell
+.\.venv\Scripts\python.exe scripts/evaluate_search_policy.py
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval_modes.py --embeddings fixtures
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval_modes.py --embeddings local --repeats 5
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval_quality.py
+.\.venv\Scripts\python.exe scripts/evaluate_query_retry.py --embeddings fixtures
+.\.venv\Scripts\python.exe scripts/evaluate_query_retry.py --embeddings local --repeats 5
+.\.venv\Scripts\python.exe scripts/evaluate_mmr_selection.py --repeats 5
+```
+
+Local-model experiments require existing cached weights and force offline model loading. Fixed-vector fixtures test mechanisms, not embedding quality. Newer scripts create distinct result files and reject existing output paths.
+
+The original retrieval comparison requires the included synthetic PDFs and cached model. Its older script can overwrite default reports, so choose a new path for both JSON and Markdown:
+
+```powershell
+$output = "..\docs\retrieval_compare_$([guid]::NewGuid().ToString('N')).json"
+if ((Test-Path $output) -or (Test-Path ([IO.Path]::ChangeExtension($output, '.md')))) {
+    throw 'Output already exists'
+}
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --mode compare --output $output
+```
+
+### Answer evaluation without generation
+
+```powershell
+.\.venv\Scripts\python.exe scripts/evaluate_answer_quality.py
+.\.venv\Scripts\python.exe scripts/prepare_answer_pilot.py
+```
+
+The first command evaluates the public synthetic answer fixtures; semantic criteria remain pending without explicit annotations. The second exports the six frozen pilot requests using a local mock transport, without contacting OpenAI or performing retrieval. Neither command generates a model answer.
+
+The isolated live runner is excluded from the quick start. It requires separate artifact-bound approval and maintains durable reservations with no automatic retry/resume. Do not delete a completed or uncertain pilot's state to rerun it. No runtime LLM judge is implemented.
+
+## Project Structure
+
+```text
+backend/
+  app/
+    main.py                 # FastAPI endpoints and error mapping
+    services/               # PDF, chunking, retrieval, storage and generation
+    workflows/              # Integrated graph/policy and isolated experiments
+  evaluation/               # Metrics, review models and isolated pilot tooling
+  scripts/                  # Demos and evaluation commands
+  tests/                    # Unit, API, workflow and offline-evaluation tests
+  requirements.txt
+  streamlit_app.py
+```
+
+Repository-level data and documentation:
+
+```text
+data/
+  sample_documents/         # Synthetic PDF examples
+  evaluation/               # Synthetic cases and references
+  storage/                  # Ignored runtime database and pilot state
+docs/
+  public_evaluation_summary_20261125.md
+  publication_selection_8a_20261125.md
+```
+
+The repository-level `data` directory is outside `backend`.
+
+## Architecture Decisions
+
+| Component | Decision from the experiments |
+| --- | --- |
+| Semantic / Hybrid / German Hybrid | Keep Semantic as default; retain hybrid modes as explicit alternatives. The original comparison does not show a reason to promote them to default. |
+| Deterministic Search Policy | Use explicit metadata and document IDs; do not infer autonomous tool reasoning from a fixed graph. |
+| Automatic Retrieval Mode Selection | Isolated and disabled. No validated rule exists; fallback is retained. A disabled policy cannot improve its fixed fallback. |
+| Retrieval Retry | Not integrated. Fixture gains did not translate into a demonstrated local-model advantage over fair candidate-budget controls. |
+| MMR | Not integrated. Independent test evidence coverage did not improve, while extra embeddings and local latency were recorded. |
+| Additional LLM Judges | Not implemented. No calibrated incremental benefit has been established to justify extra calls, latency and correlated evaluation bias. |
+
+These are decisions for the inspected experiments, not general claims about the technologies. The [public evaluation summary](docs/public_evaluation_summary_20261125.md) explains the evidence and confounding factors.
+
+## Limitations
+
+- Local single-user, single-backend-process prototype; no production authentication or multi-tenant isolation.
+- SQLite stores document text and embeddings locally in cleartext. Original PDFs are not persisted.
+- No OCR pipeline is implemented; PDFs without extractable text are rejected.
+- Nonempty context and valid source references do not prove that an answer is supported or complete.
+- Small synthetic evaluation samples; frozen one-chunk context in the real pilot instead of end-to-end retrieval.
+- No independent human review or repeated real-model measurements; no generalizable production-accuracy claim.
+- Most package versions and the embedding revision are not locked. Model access, versions and prices can change.
+- Full raw live-pilot artifacts are not in the recommended public bundle, so public auditing is limited to the summary and included synthetic tooling.
+
+## Roadmap
+
+- [x] Multi-document indexing, token-aware chunking and local multilingual embeddings.
+- [x] SQLite persistence, document management and explicit document scope.
+- [x] Deterministic LangGraph question workflow and optional hybrid modes.
+- [x] Offline retrieval comparisons, diagnostics, retry and MMR experiments.
+- [x] Synthetic answer fixtures, controlled real-response pilot and explicitly AI-assisted review.
+- [ ] Independent human review and broader unseen multi-document, multi-chunk end-to-end cases.
+- [ ] Repeated live measurements only under a separate approved budget.
+- [ ] Productive mode selection, retry or MMR only after independent benefit is established.
+- [x] Offline CI workflow configured; first remote run pending.
+- [ ] A tested dependency lock/model revision and license selection.
+- [ ] Authentication, deployment hardening and multi-user design before broader deployment.
