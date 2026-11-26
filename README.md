@@ -1,8 +1,32 @@
 # DocuAgent
 
-A local PDF question-answering prototype built with FastAPI, Streamlit, SQLite, LangGraph and multilingual embeddings.
+[![CI](https://github.com/mokhtarrezaee1991/docuagent/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mokhtarrezaee1991/docuagent/actions/workflows/ci.yml)
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-1C3C3C)](https://github.com/langchain-ai/langgraph)
+[![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 
-**Status:** work in progress; local single-user application. **Validation:** 665 automated tests passed on 25 November 2026. This is a regression-test result, not model accuracy.
+**Ask questions across PDFs, with document-scoped retrieval and traceable sources.** DocuAgent combines local multilingual embeddings, persistent SQLite storage and a deterministic LangGraph workflow with GPT-4.1-mini answer generation.
+
+**Status:** completed local portfolio prototype for a single user; not production-ready. The project includes 665 locally verified regression tests and documented retrieval and answer-quality experiments. Test counts measure software behavior, not model accuracy.
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Application Demo](#application-demo)
+- [Key Features](#key-features)
+- [System Architecture](#system-architecture)
+- [Technology Stack](#technology-stack)
+- [Retrieval and Generation Workflow](#retrieval-and-generation-workflow)
+- [Evaluation Results](#evaluation-results)
+- [Installation and Configuration](#installation-and-configuration)
+- [Running the Application](#running-the-application)
+- [Testing and Evaluation](#testing-and-evaluation)
+- [Project Structure](#project-structure)
+- [Architecture Decisions](#architecture-decisions)
+- [Limitations](#limitations)
+- [Roadmap](#roadmap)
 
 ## Project Overview
 
@@ -10,7 +34,31 @@ DocuAgent indexes multiple PDFs, retrieves passages within an explicit document 
 
 The project explores the engineering boundaries of a small RAG system: input validation, reusable embeddings, deterministic orchestration, source constraints, offline evaluation and controlled paid-model experiments. Semantic search remains the default. Experiments that have not demonstrated independent value remain outside the application workflow.
 
-See the [public evaluation summary](docs/public_evaluation_summary_20261125.md) for measured results and their limitations, and the [publication selection](docs/publication_selection_8a_20261125.md) for the proposed documentation/source boundary.
+See the [public evaluation summary](docs/public_evaluation_summary_20261125.md) for the measured results, evidence types and limitations.
+
+## Application Demo
+
+Authentic screenshots of the local application using the synthetic `DocuAgent_Testdokument.pdf` and `DocuAgent_IT_Sicherheitsrichtlinie.pdf` examples. These captures illustrate specific interactions, not general answer accuracy. The interface is in German.
+
+### Multi-Document Question Answering
+
+A question combines password and annual-leave information from two documents. The expanded sources show the filename, page, chunk and document ID for each reference.
+
+![DocuAgent answering a question across two synthetic PDFs, with expanded document, page and chunk references.](docs/assets/multi_document_qa.png)
+
+### Document Filtering and Abstention
+
+With only the IT security document selected, the final exchange shows abstention on an annual-leave question. Earlier chat messages remain visible; the final answer illustrates the selected document scope.
+
+![DocuAgent with the synthetic IT security document selected, answering a password question and declining an annual-leave question.](docs/assets/document_filtering_abstention.png)
+
+### Interactive REST API Documentation
+
+FastAPI's Swagger UI lists the document-management, retrieval and question-answering endpoints with their request schemas.
+
+![FastAPI Swagger UI showing DocuAgent health, PDF upload, indexing, document management, search and ask endpoints.](docs/assets/swagger_api.png)
+
+The uploader's built-in widget label shows 200 MB; DocuAgent separately enforces a **10 MiB per-file limit** in the UI and backend. The screenshot does not demonstrate a larger upload allowance.
 
 ## Key Features
 
@@ -134,6 +182,8 @@ An empty index returns HTTP 409, invalid requests/scopes HTTP 422, missing answe
 
 ### Retrieval: original 20-question synthetic sample
 
+![Retrieval results on 20 synthetic questions: Semantic Hit@1 75%, Hit@3 95%; Hybrid 65%, 80%; Hybrid-DE 60%, 95%.](docs/assets/retrieval_performance.svg)
+
 | Method | Hit@1 | Hit@3 | Full-ranking MRR |
 | --- | ---: | ---: | ---: |
 | Semantic Search | 75% | 95% | 0.862500 |
@@ -159,7 +209,7 @@ The requested model was `gpt-4.1-mini`; recorded model metadata identifies `gpt-
 
 Synthetic answer fixtures are separate regression data containing intentional faults; they are not a model-performance baseline. Details, including the D04 wording limitation and T05 schema mapping, are in the [public evaluation summary](docs/public_evaluation_summary_20261125.md).
 
-The raw live artifact chain is retained locally and is not part of the recommended public bundle. The public summary therefore does **not** offer complete public revalidation of the real-model pilot. Public synthetic datasets and offline tools remain available.
+The raw live artifact chain is retained locally and is not published. The public summary therefore does **not** offer complete public revalidation of the real-model pilot. Public synthetic datasets and offline tools remain available.
 
 ## Installation and Configuration
 
@@ -220,15 +270,17 @@ All commands below run from `backend`. Automated tests use artificial documents 
 .\.venv\Scripts\python.exe -m pip check
 ```
 
-The complete local suite passed **665 tests on 25 November 2026**. This is a dated Windows result, not a GitHub Actions result.
+The complete suite passed **665 tests on 26 November 2026** in a local checkout simulation with Linux-style Git settings, using the existing Windows Python environment. No tests were excluded. This is a regression result, not an answer-quality metric or a native Linux test.
 
 ### Continuous integration
 
-The [CI workflow](.github/workflows/ci.yml) runs the complete automated suite on pushes and pull requests to `main`, using Ubuntu 24.04 and Python 3.11. It installs public dependencies, runs `pip check`, then runs `python -m pytest -v` with no test exclusions (currently 665 tests).
+The [CI workflow](.github/workflows/ci.yml) runs the complete automated suite on pushes and pull requests to `main`, using Ubuntu 24.04 and Python 3.11. It installs public dependencies, runs `pip check`, then runs `python -m pytest -v` with no test exclusions. The current locally verified suite contains 665 tests.
 
 Tests use mock OpenAI responses and synthetic embeddings; no paid API calls or model-weight downloads are intended. External Python socket connections are blocked during tests, and Hugging Face offline mode is enabled. Loopback remains available for local test infrastructure. Dependency installation downloads public packages; that is separate from API usage. Only pip downloads are cached, not model weights or private artifacts.
 
-A remote GitHub Actions run has **not yet been performed**. Fresh Linux dependency resolution remains unverified; requirements are mostly unpinned. See the [CI audit and dependency-versioning proposal](docs/ci_reproducibility_8b_20261125.md) and [updated publication selection](docs/publication_selection_8b_20261125.md). All required Phase-7 source, tests and synthetic data must be included in the proposed commit.
+GitHub Actions run **#3** was reported successful for commit [`9d0f439`](https://github.com/mokhtarrezaee1991/docuagent/commit/9d0f439), with a duration of **1 minute 42 seconds**. The exact remote pytest count has not been independently verified from a saved run log; the **665-test count above is locally verified**. The badge links to the live workflow status.
+
+[`.gitattributes`](.gitattributes) explicitly preserves CRLF checkout bytes for the two historical answer-quality JSON files, keeping their SHA-256 bindings consistent across platforms. Existing artifacts and integrity checks remain unchanged. Most dependencies and the embedding model revision are still unpinned, so one successful run does not guarantee identical future installations.
 
 ### Offline experiments
 
@@ -280,16 +332,21 @@ backend/
   streamlit_app.py
 ```
 
-Repository-level data and documentation:
+Repository-level CI, data and documentation:
 
 ```text
+.github/
+  workflows/ci.yml          # Ubuntu / Python 3.11 offline test pipeline
+.gitattributes              # Preserve historical JSON byte-hash compatibility
+ci/
+  offline_guard/
+    sitecustomize.py        # External Python socket guard for CI tests
 data/
   sample_documents/         # Synthetic PDF examples
   evaluation/               # Synthetic cases and references
   storage/                  # Ignored runtime database and pilot state
 docs/
   public_evaluation_summary_20261125.md
-  publication_selection_8a_20261125.md
 ```
 
 The repository-level `data` directory is outside `backend`.
@@ -316,9 +373,11 @@ These are decisions for the inspected experiments, not general claims about the 
 - Small synthetic evaluation samples; frozen one-chunk context in the real pilot instead of end-to-end retrieval.
 - No independent human review or repeated real-model measurements; no generalizable production-accuracy claim.
 - Most package versions and the embedding revision are not locked. Model access, versions and prices can change.
-- Full raw live-pilot artifacts are not in the recommended public bundle, so public auditing is limited to the summary and included synthetic tooling.
+- Full raw live-pilot artifacts are not published, so public auditing is limited to the summary and included synthetic tooling.
 
 ## Roadmap
+
+The local prototype scope is complete. Unchecked items are possible follow-up work, not implemented features or release commitments.
 
 - [x] Multi-document indexing, token-aware chunking and local multilingual embeddings.
 - [x] SQLite persistence, document management and explicit document scope.
@@ -328,6 +387,7 @@ These are decisions for the inspected experiments, not general claims about the 
 - [ ] Independent human review and broader unseen multi-document, multi-chunk end-to-end cases.
 - [ ] Repeated live measurements only under a separate approved budget.
 - [ ] Productive mode selection, retry or MMR only after independent benefit is established.
-- [x] Offline CI workflow configured; first remote run pending.
+- [x] GitHub Actions offline CI; run #3 reported successful for commit `9d0f439`.
+- [x] Cross-platform checkout rules preserve historical evaluation hashes.
 - [ ] A tested dependency lock/model revision and license selection.
 - [ ] Authentication, deployment hardening and multi-user design before broader deployment.

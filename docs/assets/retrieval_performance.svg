@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="480" viewBox="0 0 880 480" role="img" aria-labelledby="title description">
+  <title id="title">Retrieval performance on 20 synthetic questions</title>
+  <desc id="description">Grouped bars compare Hit@1 and Hit@3. Semantic: 75% and 95%. Hybrid: 65% and 80%. Hybrid-DE: 60% and 95%. These retrieval results are specific to 20 synthetic questions about two PDFs and do not measure general model accuracy.</desc>
+  <rect width="880" height="480" rx="16" fill="#ffffff"/>
+  <rect x="1" y="1" width="878" height="478" rx="15" fill="none" stroke="#cbd5e1"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="40" y="44" fill="#0f172a" font-size="24" font-weight="700">Retrieval performance</text>
+    <text x="40" y="70" fill="#475569" font-size="15">20 synthetic questions · two PDF documents · identical relevance references</text>
+    <g font-size="14" fill="#334155">
+      <rect x="602" y="94" width="14" height="14" rx="3" fill="#2563eb"/>
+      <text x="624" y="106">Hit@1</text>
+      <rect x="704" y="94" width="14" height="14" rx="3" fill="#0f766e"/>
+      <text x="726" y="106">Hit@3</text>
+    </g>
+    <text x="78" y="109" fill="#475569" font-size="13">Questions with a relevant hit (%)</text>
+    <g stroke="#e2e8f0" stroke-width="1">
+      <path d="M88 140H808 M88 184H808 M88 228H808 M88 272H808 M88 316H808"/>
+    </g>
+    <g fill="#475569" font-size="13" text-anchor="end">
+      <text x="74" y="145">100</text>
+      <text x="74" y="189">80</text>
+      <text x="74" y="233">60</text>
+      <text x="74" y="277">40</text>
+      <text x="74" y="321">20</text>
+      <text x="74" y="365">0</text>
+    </g>
+    <path d="M88 140V360H808" fill="none" stroke="#94a3b8" stroke-width="1"/>
+    <!-- Zero baseline: y=360; 100 percent corresponds to 220 pixels. -->
+    <g fill="#2563eb">
+      <rect x="176" y="195" width="64" height="165" rx="3"/>
+      <rect x="404" y="217" width="64" height="143" rx="3"/>
+      <rect x="632" y="228" width="64" height="132" rx="3"/>
+    </g>
+    <g fill="#0f766e">
+      <rect x="252" y="151" width="64" height="209" rx="3"/>
+      <rect x="480" y="184" width="64" height="176" rx="3"/>
+      <rect x="708" y="151" width="64" height="209" rx="3"/>
+    </g>
+    <g fill="#0f172a" font-size="17" font-weight="700" text-anchor="middle">
+      <text x="208" y="185">75%</text>
+      <text x="284" y="141">95%</text>
+      <text x="436" y="207">65%</text>
+      <text x="512" y="174">80%</text>
+      <text x="664" y="218">60%</text>
+      <text x="740" y="141">95%</text>
+    </g>
+    <g fill="#0f172a" font-size="16" font-weight="600" text-anchor="middle">
+      <text x="246" y="390">Semantic</text>
+      <text x="474" y="390">Hybrid</text>
+      <text x="702" y="390">Hybrid-DE</text>
+    </g>
+    <path d="M40 416H840" stroke="#e2e8f0"/>
+    <text x="40" y="442" fill="#475569" font-size="14">Hit@k: at least one relevant result among the first k retrieved chunks.</text>
+    <text x="40" y="464" fill="#475569" font-size="14">Small synthetic sample; these metrics do not establish general model accuracy.</text>
+  </g>
+</svg>
